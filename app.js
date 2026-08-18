@@ -1,64 +1,104 @@
 /* ===========================================================================
-   Lingua Bridge — Prüf- und Aufnahmewerkzeug
-   ---------------------------------------------------------------------------
-   Speichert immer lokal (IndexedDB) und zusätzlich zentral (Supabase),
-   sobald in config.js Zugangsdaten hinterlegt sind. Damit setzt man auf
-   jedem Gerät genau dort fort, wo man aufgehört hat.
+   Lingua Bridge — Pruef- und Aufnahmewerkzeug
+   Speichert lokal (IndexedDB) und zentral (Supabase), sobald config.js
+   ausgefuellt ist. Faellt bei Problemen sichtbar zurueck statt still zu haengen.
    ========================================================================= */
 
-let DB = null, DATEN = [], korr = {}, VERZ = null, sb = null;
+let DB = null, DATEN = [], korr = {}, VERZ = null;
 let kat = 'behoerde', nurOffen = false, idx = 0, suche = '';
-let ICH = localStorage.getItem('lb_name') || '';
+let ICH = '';
 let ONLINE = false, geladeneBloecke = new Set();
+let lokaleAudios = new Set(), zentraleAudios = new Map();
 
-/* ---------------------------------------------------- IndexedDB (lokal) */
+try { ICH = localStorage.getItem('lb_name') || ''; } catch (e) { }
+
+function zeigeFehler(t) {
+  const el = document.getElementById('fehler');
+  if (el) { el.style.display = 'block'; el.innerHTML = t; }
+  console.error(t);
+}
+function zeigeSync(t, dauer) {
+  const el = document.getElementById('sync');
+  if (!el) return;
+  el.textContent = t;
+  el.classList.toggle('online', ONLINE);
+  setTimeout(() => { if (el.textContent === t) el.textContent = ONLINE ? '☁ verbunden' : '○ dieses Gerät'; },
+    dauer || 2400);
+}
+
+/* -------------------------------------------------- IndexedDB (lokal) */
 function oeffneDB() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open('linguabridge', 2);
+  return new Promise((res) => {
+    let fertig = false;
+    const r = indexedDB.open('linguabridge', 3);
     r.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('audio')) db.createObjectStore('audio');
       if (!db.objectStoreNames.contains('korr')) db.createObjectStore('korr');
     };
-    r.onsuccess = e => res(e.target.result);
-    r.onerror = () => rej(r.error);
+    r.onsuccess = e => { fertig = true; res(e.target.result); };
+    r.onerror = () => { fertig = true; res(null); };
+    r.onblocked = () => {
+      zeigeFehler('<b>Bitte andere Tabs dieser Seite schließen</b> — die Datenbank ist dort noch geöffnet.');
+      setTimeout(() => { if (!fertig) res(null); }, 3000);
+    };
+    setTimeout(() => { if (!fertig) res(null); }, 6000);
   });
 }
-const tx = (s, m) => DB.transaction(s, m).objectStore(s);
-function put(s, k, v) { return new Promise(r => { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).put(v, k); t.oncomplete = r; t.onerror = r; }); }
-function get(s, k) { return new Promise(r => { const q = tx(s, 'readonly').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(undefined); }); }
-function del(s, k) { return new Promise(r => { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).delete(k); t.oncomplete = r; t.onerror = r; }); }
-function alleKeys(s) { return new Promise(r => { const q = tx(s, 'readonly').getAllKeys(); q.onsuccess = () => r(q.result || []); q.onerror = () => r([]); }); }
+function put(s, k, v) {
+  return new Promise(r => {
+    if (!DB) return r();
+    try { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).put(v, k); t.oncomplete = r; t.onerror = r; }
+    catch { r(); }
+  });
+}
+function hole(s, k) {
+  return new Promise(r => {
+    if (!DB) return r(undefined);
+    try { const q = DB.transaction(s, 'readonly').objectStore(s).get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(undefined); }
+    catch { r(undefined); }
+  });
+}
+function entferne(s, k) {
+  return new Promise(r => {
+    if (!DB) return r();
+    try { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).delete(k); t.oncomplete = r; t.onerror = r; }
+    catch { r(); }
+  });
+}
+function alleKeys(s) {
+  return new Promise(r => {
+    if (!DB) return r([]);
+    try { const q = DB.transaction(s, 'readonly').objectStore(s).getAllKeys(); q.onsuccess = () => r(q.result || []); q.onerror = () => r([]); }
+    catch { r([]); }
+  });
+}
 
-/* ------------------------------------------------------ Supabase (zentral) */
+/* -------------------------------------------------- Supabase (zentral) */
 async function sbAnfrage(pfad, opt = {}) {
-  if (!ONLINE) return null;
   const r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/' + pfad, {
     ...opt,
     headers: {
       apikey: CONFIG.SUPABASE_KEY,
       Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY,
       'Content-Type': 'application/json',
-      Prefer: 'resolution=merge-duplicates,return=minimal',
       ...(opt.headers || {})
     }
   });
-  if (!r.ok) throw new Error(await r.text());
+  if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 120));
   const t = await r.text();
   return t ? JSON.parse(t) : null;
 }
 
 async function zentralLaden() {
-  if (!ONLINE) return;
+  if (!ONLINE) return 0;
   try {
-    const rows = await sbAnfrage('korrekturen?select=*&limit=100000', {
-      headers: { Prefer: 'return=representation' }
-    });
+    const rows = await sbAnfrage('korrekturen?select=*&limit=100000',
+      { headers: { Prefer: 'return=representation' } });
     let n = 0;
     (rows || []).forEach(r => {
-      const lokal = korr[r.eintrag_id];
-      const zentralNeuer = !lokal || !lokal._zeit || new Date(r.geaendert_am) > new Date(lokal._zeit);
-      if (zentralNeuer) {
+      const l = korr[r.eintrag_id];
+      if (!l || !l._zeit || new Date(r.geaendert_am) > new Date(l._zeit)) {
         korr[r.eintrag_id] = {
           de: r.de || undefined, so: r.so || undefined, ymm: r.ymm || undefined,
           urteil: r.urteil || undefined, notiz: r.notiz || undefined,
@@ -69,7 +109,7 @@ async function zentralLaden() {
     });
     await put('korr', 'alle', korr);
     return n;
-  } catch (e) { console.warn('Zentral laden:', e.message); return 0; }
+  } catch (e) { console.warn('zentralLaden:', e.message); return 0; }
 }
 
 async function zentralSpeichern(id) {
@@ -85,31 +125,28 @@ async function zentralSpeichern(id) {
         bearbeiter: ICH || 'unbekannt', team_code: CONFIG.TEAM_CODE
       }])
     });
-    zeigeSync('gespeichert');
-  } catch (e) { zeigeSync('nur lokal'); }
+    zeigeSync('✓ gespeichert');
+  } catch { zeigeSync('nur lokal'); }
 }
 
 async function positionMerken() {
   if (!ONLINE || !ICH) return;
   try {
     await sbAnfrage('fortschritt', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates' },
+      method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify([{ bearbeiter: ICH, kategorie: kat, position: idx, team_code: CONFIG.TEAM_CODE }])
     });
-  } catch (e) { /* nicht kritisch */ }
+  } catch { }
 }
-
 async function positionHolen() {
   if (!ONLINE || !ICH) return null;
   try {
-    const r = await sbAnfrage(`fortschritt?bearbeiter=eq.${encodeURIComponent(ICH)}&select=*`,
+    const r = await sbAnfrage('fortschritt?bearbeiter=eq.' + encodeURIComponent(ICH) + '&select=*',
       { headers: { Prefer: 'return=representation' } });
     return r && r[0] ? r[0] : null;
   } catch { return null; }
 }
 
-/* ------------------------------------------------------ Aufnahmen zentral */
 async function audioHochladen(key, blob) {
   if (!ONLINE) return null;
   const pfad = key.replace(/:/g, '_') + '.webm';
@@ -117,51 +154,46 @@ async function audioHochladen(key, blob) {
     const r = await fetch(CONFIG.SUPABASE_URL + '/storage/v1/object/aufnahmen/' + pfad, {
       method: 'POST',
       headers: {
-        apikey: CONFIG.SUPABASE_KEY,
-        Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY,
-        'Content-Type': 'audio/webm',
-        'x-upsert': 'true'
+        apikey: CONFIG.SUPABASE_KEY, Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY,
+        'Content-Type': 'audio/webm', 'x-upsert': 'true'
       },
       body: blob
     });
     if (!r.ok) throw new Error(await r.text());
-    const [, eid, varietaet] = key.split(':');
+    const teile = key.split(':');
     await sbAnfrage('aufnahmen', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates' },
+      method: 'POST', headers: { Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify([{
-        eintrag_id: eid, varietaet, pfad, sprecher: ICH || 'unbekannt',
-        bytes: blob.size, team_code: CONFIG.TEAM_CODE
+        eintrag_id: teile[1], varietaet: teile[2], pfad,
+        sprecher: ICH || 'unbekannt', bytes: blob.size, team_code: CONFIG.TEAM_CODE
       }])
     });
     return pfad;
-  } catch (e) { console.warn('Audio hoch:', e.message); return null; }
+  } catch (e) { console.warn('audioHochladen:', e.message); return null; }
 }
-
-let zentraleAudios = new Map();
 async function zentraleAudiosLaden() {
   if (!ONLINE) return;
   try {
-    const r = await sbAnfrage('aufnahmen?select=eintrag_id,varietaet,pfad,sprecher', {
-      headers: { Prefer: 'return=representation' }
-    });
+    const r = await sbAnfrage('aufnahmen?select=eintrag_id,varietaet,pfad,sprecher',
+      { headers: { Prefer: 'return=representation' } });
     zentraleAudios = new Map((r || []).map(a => ['audio:' + a.eintrag_id + ':' + a.varietaet, a]));
-  } catch { /* egal */ }
+  } catch { }
 }
 function audioUrl(key) {
   const a = zentraleAudios.get(key);
   return a ? CONFIG.SUPABASE_URL + '/storage/v1/object/public/aufnahmen/' + a.pfad : null;
 }
 
-/* ------------------------------------------------------------- Vorlesen */
+/* --------------------------------------------------------- Vorlesen */
 function sprich(t) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(t);
-  u.lang = 'de-DE'; u.rate = 0.85; speechSynthesis.speak(u);
+  u.lang = 'de-DE'; u.rate = .85;
+  speechSynthesis.speak(u);
 }
 
-/* ------------------------------------------------------------- Aufnahme */
+/* --------------------------------------------------------- Aufnahme */
 const rec = {};
 async function starteAufnahme(key, btnId) {
   try {
@@ -174,143 +206,134 @@ async function starteAufnahme(key, btnId) {
       const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
       await put('audio', key, blob);
       rec[key] = null;
-      zeichne();
+      await zeichne();
       const p = await audioHochladen(key, blob);
-      if (p) { await zentraleAudiosLaden(); zeigeSync('Aufnahme hochgeladen'); zeichne(); }
+      if (p) { await zentraleAudiosLaden(); zeigeSync('☁ hochgeladen'); zeichne(); }
     };
     mr.start();
     rec[key] = { mr, start: Date.now() };
-    zeichne();
+    await zeichne();
     const el = document.getElementById(btnId);
     rec[key].timer = setInterval(() => {
-      if (el && rec[key]) el.textContent = '\u23F9 Stopp \u00B7 ' + Math.floor((Date.now() - rec[key].start) / 1000) + 's';
-    }, 500);
-  } catch { alert('Kein Mikrofonzugriff. Bitte im Browser erlauben.'); }
+      if (el && rec[key]) el.textContent = '⏹ Stopp · ' + Math.floor((Date.now() - rec[key].start) / 1000) + 's';
+    }, 400);
+  } catch {
+    zeigeFehler('<b>Kein Mikrofonzugriff.</b> Bitte im Browser erlauben (Schloss-Symbol links in der Adresszeile).');
+  }
 }
 function stoppeAufnahme(key) { if (rec[key]) { clearInterval(rec[key].timer); rec[key].mr.stop(); } }
-
 async function spieleAb(key) {
-  const b = await get('audio', key);
+  const b = await hole('audio', key);
   if (b) { new Audio(URL.createObjectURL(b)).play(); return; }
   const u = audioUrl(key);
   if (u) new Audio(u).play();
 }
 async function ladeRunter(key, wort) {
-  let b = await get('audio', key);
-  if (!b) {
-    const u = audioUrl(key);
-    if (!u) return;
-    b = await (await fetch(u)).blob();
-  }
+  let b = await hole('audio', key);
+  if (!b) { const u = audioUrl(key); if (!u) return; b = await (await fetch(u)).blob(); }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
-  a.download = key.replace(/:/g, '_') + '_' + (wort || '').replace(/[^\wäöüßÄÖÜ-]/g, '') + '.webm';
+  a.download = key.replace(/:/g, '_') + '_' + String(wort || '').replace(/[^\wäöüßÄÖÜ-]/g, '').slice(0, 30) + '.webm';
   a.click();
 }
-async function loescheAudio(key) { await del('audio', key); zeichne(); }
+async function loescheAudio(key) { await entferne('audio', key); zeichne(); }
 
-/* ---------------------------------------------------------- Korrekturen */
-let sichernTimer, sbTimer;
+/* ------------------------------------------------------ Korrekturen */
+let tLokal, tZentral;
 function setze(id, feld, wert) {
   korr[id] = korr[id] || {};
   korr[id][feld] = wert;
   korr[id]._zeit = new Date().toISOString();
-  clearTimeout(sichernTimer);
-  sichernTimer = setTimeout(() => put('korr', 'alle', korr), 400);
-  clearTimeout(sbTimer);
-  sbTimer = setTimeout(() => zentralSpeichern(id), 1200);
+  clearTimeout(tLokal); tLokal = setTimeout(() => put('korr', 'alle', korr), 400);
+  clearTimeout(tZentral); tZentral = setTimeout(() => zentralSpeichern(id), 1400);
 }
 async function urteil(id, wert) {
   setze(id, 'urteil', wert);
   await put('korr', 'alle', korr);
   zentralSpeichern(id);
+  const k = document.getElementById('karte');
+  if (k && wert === 'ok') { k.classList.add('gut'); setTimeout(() => k.classList.remove('gut'), 600); }
   const l = liste();
   if (idx < l.length - 1) idx++;
   positionMerken();
   zeichne();
 }
 
-/* --------------------------------------------------------------- Filter */
+/* ----------------------------------------------------------- Filter */
 function liste() {
   let l = kat === 'alle' ? DATEN : DATEN.filter(d => d.k === kat);
   if (nurOffen) l = l.filter(d => !(korr[d.i] || {}).urteil);
   if (suche) {
     const s = suche.toLowerCase();
-    l = l.filter(d => ((d.de || '') + (d.en || '') + d.so + (d.ymm || '')).toLowerCase().includes(s));
+    l = l.filter(d => ((d.de || '') + (d.en || '') + (d.so || '') + (d.ymm || '')).toLowerCase().includes(s));
   }
   return l;
 }
 
-/* ------------------------------------------------------------- Zeichnen */
-let lokaleAudios = new Set();
-function zeigeSync(t) {
-  const el = document.getElementById('sync');
-  if (el) { el.textContent = t; setTimeout(() => { if (el.textContent === t) el.textContent = ONLINE ? '\u2601 verbunden' : '\u25CB nur dieses Gerät'; }, 2200); }
-}
+/* --------------------------------------------------------- Zeichnen */
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
 
 async function zeichne() {
   lokaleAudios = new Set(await alleKeys('audio'));
   const l = liste();
   if (idx >= l.length) idx = Math.max(0, l.length - 1);
   const e = l[idx];
-  const fertig = Object.values(korr).filter(p => p.urteil).length;
+  const fertig = Object.values(korr).filter(p => p && p.urteil).length;
+  const ges = DATEN.length || 1;
 
-  document.getElementById('fortschritt').textContent = fertig.toLocaleString('de') + ' / ' + DATEN.length.toLocaleString('de');
-  document.getElementById('balken').style.width = Math.min(100, fertig / DATEN.length * 100) + '%';
-  document.getElementById('mitAudio').textContent = new Set([...lokaleAudios, ...zentraleAudios.keys()]).size;
+  document.getElementById('fortschritt').textContent =
+    fertig.toLocaleString('de') + ' / ' + DATEN.length.toLocaleString('de');
+  document.getElementById('balken').style.width = Math.min(100, fertig / ges * 100) + '%';
+  document.getElementById('mitAudio').textContent =
+    new Set([...lokaleAudios, ...zentraleAudios.keys()]).size;
 
-  if (!e) { document.getElementById('karte').innerHTML = '<p class="leer">Nichts gefunden.</p>'; return; }
+  const karte = document.getElementById('karte');
+  if (!e) { karte.innerHTML = '<p class="leer">Nichts gefunden.</p>'; return; }
+
   const p = korr[e.i] || {};
   const kSo = 'audio:' + e.i + ':so', kYmm = 'audio:' + e.i + ':ymm';
-  const soWert = p.so !== undefined ? p.so : e.so;
-  const ymmWert = p.ymm !== undefined ? p.ymm : (e.ymm || '');
-  const deWert = p.de !== undefined ? p.de : e.de;
-  const esc = s => (s || '').replace(/"/g, '&quot;');
-  const langerText = e.so && e.so.length > 60;
+  const soW = p.so !== undefined ? p.so : (e.so || '');
+  const ymmW = p.ymm !== undefined ? p.ymm : (e.ymm || '');
+  const deW = p.de !== undefined ? p.de : (e.de || '');
+  const lang = (e.so || '').length > 60;
 
-  document.getElementById('karte').innerHTML = `
-    <div class="kopfzeile">
-      <span class="zaehler">${(idx + 1).toLocaleString('de')} von ${l.length.toLocaleString('de')}</span>
-      <span>
-        ${e.u ? '<span class="warn">unsicher</span>' : ''}
-        ${p._wer && p._wer !== ICH ? `<span class="wer">${p._wer}</span>` : ''}
-      </span>
-    </div>
-    <div class="dezeile">
-      <div style="flex:1">
-        ${deWert
-          ? `<div class="de">${deWert}</div>${e.pl ? `<div class="pl">Plural: ${e.pl}</div>` : ''}`
-          : `<div class="fehlt">Deutsche Übersetzung fehlt</div>`}
-        ${e.en ? `<div class="en">EN \u00B7 ${e.en}</div>` : ''}
-      </div>
-      ${deWert ? `<button class="rund" onclick="sprich(${JSON.stringify(deWert + (e.pl ? ', ' + e.pl : ''))})">\u{1F50A}</button>` : ''}
-    </div>
-    ${!e.de ? `<input class="feld" placeholder="Deutsche \u00DCbersetzung eintragen" value="${esc(p.de)}" oninput="setze('${e.i}','de',this.value)">` : ''}
-    ${e.n ? `<div class="notiz">${e.n}</div>` : ''}
+  karte.innerHTML =
+    '<div class="kopfzeile">' +
+      '<span class="zaehler">' + (idx + 1).toLocaleString('de') + ' VON ' + l.length.toLocaleString('de') + '</span>' +
+      '<span>' + (e.u ? '<span class="warn">unsicher</span> ' : '') +
+        (p._wer && p._wer !== ICH ? '<span class="wer">' + esc(p._wer) + '</span>' : '') + '</span>' +
+    '</div>' +
+    '<div class="dezeile"><div style="flex:1;min-width:0">' +
+      (deW ? '<div class="de">' + esc(deW) + '</div>' + (e.pl ? '<div class="pl">Plural: ' + esc(e.pl) + '</div>' : '')
+           : '<div class="fehlt">Deutsche Übersetzung fehlt</div>') +
+      (e.en ? '<div class="en"><b>EN</b> ' + esc(e.en) + '</div>' : '') +
+    '</div>' +
+    (deW ? '<button class="rund" onclick="sprich(' + JSON.stringify(deW + (e.pl ? ', ' + e.pl : '')) + ')" title="Deutsch anhören">🔊</button>' : '') +
+    '</div>' +
+    (!e.de ? '<input class="feld anmerkung" placeholder="Deutsche Übersetzung eintragen" value="' + esc(p.de) + '" oninput="setze(\'' + e.i + '\',\'de\',this.value)">' : '') +
+    (e.n ? '<div class="notiz">' + esc(e.n) + '</div>' : '') +
 
-    <div class="block gruen">
-      <div class="blabel">Af-Maxaa \u00B7 Nord / Somaliland</div>
-      ${langerText
-        ? `<textarea class="feld gross" rows="3" oninput="setze('${e.i}','so',this.value)">${soWert || ''}</textarea>`
-        : `<input class="feld gross" value="${esc(soWert)}" oninput="setze('${e.i}','so',this.value)">`}
-      ${audioZeile(kSo, soWert, 'Af-Maxaa', 'gruen')}
-    </div>
+    '<div class="block gruen">' +
+      '<div class="blabel"><span class="punkt"></span>Af-Maxaa · Nord / Somaliland</div>' +
+      (lang ? '<textarea class="feld gross" rows="3" oninput="setze(\'' + e.i + '\',\'so\',this.value)">' + esc(soW) + '</textarea>'
+            : '<input class="feld gross" value="' + esc(soW) + '" oninput="setze(\'' + e.i + '\',\'so\',this.value)">') +
+      audioZeile(kSo, soW, 'Af-Maxaa', 'gruen') +
+    '</div>' +
 
-    <div class="block orange">
-      <div class="blabel">Af-Maay \u00B7 S\u00FCd</div>
-      ${langerText
-        ? `<textarea class="feld gross" rows="3" placeholder="Af-Maay eintragen" oninput="setze('${e.i}','ymm',this.value)">${ymmWert}</textarea>`
-        : `<input class="feld gross" placeholder="Af-Maay eintragen" value="${esc(ymmWert)}" oninput="setze('${e.i}','ymm',this.value)">`}
-      ${audioZeile(kYmm, ymmWert, 'Af-Maay', 'orange')}
-    </div>
+    '<div class="block amber">' +
+      '<div class="blabel"><span class="punkt"></span>Af-Maay · Süd</div>' +
+      (lang ? '<textarea class="feld gross" rows="3" placeholder="Af-Maay eintragen" oninput="setze(\'' + e.i + '\',\'ymm\',this.value)">' + esc(ymmW) + '</textarea>'
+            : '<input class="feld gross" placeholder="Af-Maay eintragen" value="' + esc(ymmW) + '" oninput="setze(\'' + e.i + '\',\'ymm\',this.value)">') +
+      audioZeile(kYmm, ymmW, 'Af-Maay', 'amber') +
+    '</div>' +
 
-    <textarea class="feld" rows="2" placeholder="Anmerkung" oninput="setze('${e.i}','notiz',this.value)">${p.notiz || ''}</textarea>
+    '<textarea class="feld anmerkung" rows="2" placeholder="Anmerkung" oninput="setze(\'' + e.i + '\',\'notiz\',this.value)">' + esc(p.notiz) + '</textarea>' +
 
-    <div class="urteile">
-      <button class="${p.urteil === 'ok' ? 'aktiv ok' : ''}" onclick="urteil('${e.i}','ok')">\u2713 richtig</button>
-      <button class="${p.urteil === 'falsch' ? 'aktiv falsch' : ''}" onclick="urteil('${e.i}','falsch')">\u2717 falsch</button>
-      <button class="${p.urteil === 'unklar' ? 'aktiv unklar' : ''}" onclick="urteil('${e.i}','unklar')">? unklar</button>
-    </div>`;
+    '<div class="urteile">' +
+      '<button class="' + (p.urteil === 'ok' ? 'aktiv ok' : '') + '" onclick="urteil(\'' + e.i + '\',\'ok\')">✓ richtig</button>' +
+      '<button class="' + (p.urteil === 'falsch' ? 'aktiv falsch' : '') + '" onclick="urteil(\'' + e.i + '\',\'falsch\')">✗ falsch</button>' +
+      '<button class="' + (p.urteil === 'unklar' ? 'aktiv unklar' : '') + '" onclick="urteil(\'' + e.i + '\',\'unklar\')">? unklar</button>' +
+    '</div>';
 
   document.getElementById('zurueck').disabled = idx === 0;
   document.getElementById('weiter').disabled = idx >= l.length - 1;
@@ -318,22 +341,31 @@ async function zeichne() {
 
 function audioZeile(key, wort, label, farbe) {
   const hat = lokaleAudios.has(key) || zentraleAudios.has(key);
-  const zentral = zentraleAudios.has(key) && !lokaleAudios.has(key);
-  const laeuft = !!rec[key];
+  const nurZentral = zentraleAudios.has(key) && !lokaleAudios.has(key);
   const bid = 'btn_' + key.replace(/:/g, '_');
-  if (laeuft) return `<div class="audio"><button id="${bid}" class="rot" onclick="stoppeAufnahme('${key}')">\u23F9 Stopp \u00B7 0s</button><span class="pulsi">\u25CF Aufnahme läuft</span></div>`;
-  return `<div class="audio">
-    <button class="${farbe}" onclick="starteAufnahme('${key}','${bid}')">\u{1F399} ${hat ? 'Neu aufnehmen' : label + ' aufnehmen'}</button>
-    ${hat ? `<button onclick="spieleAb('${key}')">\u25B6 Anhören${zentral ? ' \u2601' : ''}</button>
-             <button onclick="ladeRunter('${key}',${JSON.stringify(wort || '')})">\u2913 Datei</button>
-             ${lokaleAudios.has(key) ? `<button class="loesch" onclick="loescheAudio('${key}')">lokal löschen</button>` : ''}` : ''}
-  </div>`;
+  if (rec[key]) {
+    return '<div class="audio"><button id="' + bid + '" class="rot" onclick="stoppeAufnahme(\'' + key + '\')">⏹ Stopp · 0s</button>' +
+           '<span class="pulsi">● Aufnahme läuft</span></div>';
+  }
+  return '<div class="audio">' +
+    '<button class="' + farbe + '" onclick="starteAufnahme(\'' + key + '\',\'' + bid + '\')">🎙 ' +
+      (hat ? 'Neu aufnehmen' : label + ' aufnehmen') + '</button>' +
+    (hat ?
+      '<button onclick="spieleAb(\'' + key + '\')">▶ Anhören' + (nurZentral ? ' ☁' : '') + '</button>' +
+      '<button onclick="ladeRunter(\'' + key + '\',' + JSON.stringify(String(wort || '')) + ')">⤓ Datei</button>' +
+      (lokaleAudios.has(key) ? '<button class="loesch" onclick="loescheAudio(\'' + key + '\')">löschen</button>' : '')
+      : '') +
+    '</div>';
 }
 
-/* ------------------------------------------------------- Export / Import */
+/* --------------------------------------------------- Export / Import */
 function exportJSON() {
   const rein = {};
-  for (const k in korr) { const { _zeit, _wer, ...rest } = korr[k]; if (Object.keys(rest).length) rein[k] = rest; }
+  for (const k in korr) {
+    const o = Object.assign({}, korr[k]);
+    delete o._zeit; delete o._wer;
+    if (Object.keys(o).length) rein[k] = o;
+  }
   const b = new Blob([JSON.stringify(rein, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
@@ -345,43 +377,26 @@ async function importJSON(ev) {
   try {
     const neu = JSON.parse(await f.text());
     let n = 0;
-    for (const k in neu) { korr[k] = { ...(korr[k] || {}), ...neu[k], _zeit: new Date().toISOString() }; n++; }
+    for (const k in neu) { korr[k] = Object.assign({}, korr[k], neu[k], { _zeit: new Date().toISOString() }); n++; }
     await put('korr', 'alle', korr);
     if (ONLINE) for (const k in neu) await zentralSpeichern(k);
-    alert(n + ' Einträge übernommen.');
+    zeigeSync(n + ' übernommen', 3000);
     zeichne();
-  } catch { alert('Datei konnte nicht gelesen werden.'); }
+  } catch { zeigeFehler('Datei konnte nicht gelesen werden.'); }
   ev.target.value = '';
 }
 async function alleAudios() {
   const keys = [...new Set([...lokaleAudios, ...zentraleAudios.keys()])];
-  if (!keys.length) return alert('Noch keine Aufnahmen.');
+  if (!keys.length) { zeigeFehler('Noch keine Aufnahmen vorhanden.'); return; }
   if (!confirm(keys.length + ' Aufnahmen herunterladen?')) return;
   for (const k of keys) {
-    const e = DATEN.find(d => k.startsWith('audio:' + d.i + ':'));
-    await ladeRunter(k, e ? (k.endsWith(':so') ? e.so : e.ymm) : '');
+    const e = DATEN.find(d => k.indexOf('audio:' + d.i + ':') === 0);
+    await ladeRunter(k, e ? (k.slice(-3) === ':so' ? e.so : e.ymm) : '');
     await new Promise(r => setTimeout(r, 250));
   }
 }
 
-/* ------------------------------------------------------------ Laden */
-async function ladeBlock(n) {
-  if (geladeneBloecke.has(n)) return;
-  const r = await fetch(`daten${n}.json`);
-  DATEN = DATEN.concat(await r.json());
-  geladeneBloecke.add(n);
-}
-async function ladeAlle() {
-  for (let n = 0; n < VERZ.bloecke; n++) {
-    await ladeBlock(n);
-    document.getElementById('ladeinfo').textContent =
-      `${DATEN.length.toLocaleString('de')} von ${VERZ.gesamt.toLocaleString('de')} geladen`;
-  }
-  document.getElementById('ladeinfo').textContent = '';
-  baueFilter();
-  zeichne();
-}
-
+/* -------------------------------------------------------------- Laden */
 const NAMEN = { behoerde:'Behörde', nordsued:'Nord/Süd', begruessung:'Begrüßung', zahlen:'Zahlen',
   zeit:'Zeit', gesundheit:'Gesundheit', familie:'Familie', weg:'Weg', arbeit:'Arbeit',
   substantive:'Substantive', verben:'Verben', adjektive:'Adjektive', zahlwoerter:'Zahlwörter',
@@ -396,47 +411,40 @@ const ORD = ['behoerde','nordsued','begruessung','zahlen','zeit','gesundheit','f
   'artikelwoerter','interjektionen','suffixe','eigennamen','buchstaben','sonstige'];
 
 function baueFilter() {
-  const k = {};
-  DATEN.forEach(d => k[d.k] = (k[d.k] || 0) + 1);
+  const z = {};
+  DATEN.forEach(d => z[d.k] = (z[d.k] || 0) + 1);
   document.getElementById('filter').innerHTML =
-    `<button onclick="setKat('alle')" id="k_alle">Alle (${DATEN.length.toLocaleString('de')})</button>` +
-    ORD.filter(x => k[x]).map(x =>
-      `<button onclick="setKat('${x}')" id="k_${x}">${NAMEN[x] || x} (${k[x].toLocaleString('de')})</button>`).join('');
-  document.getElementById('k_' + kat)?.classList.add('aktiv');
+    '<button onclick="setKat(\'alle\')" id="k_alle">Alle (' + DATEN.length.toLocaleString('de') + ')</button>' +
+    ORD.filter(x => z[x]).map(x =>
+      '<button onclick="setKat(\'' + x + '\')" id="k_' + x + '">' + (NAMEN[x] || x) + ' (' + z[x].toLocaleString('de') + ')</button>'
+    ).join('');
+  const b = document.getElementById('k_' + kat);
+  if (b) b.classList.add('aktiv');
 }
 
-async function los() {
-  DB = await oeffneDB();
-  korr = (await get('korr', 'alle')) || {};
-
-  ONLINE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY);
-  document.getElementById('sync').textContent = ONLINE ? '\u2601 verbunden' : '\u25CB nur dieses Gerät';
-  if (!ICH) frageName();
-
-  VERZ = await (await fetch('verzeichnis.json')).json();
-  await ladeBlock(0);
-  baueFilter();
-  setKat('behoerde');
-
-  if (ONLINE) {
-    const n = await zentralLaden();
-    await zentraleAudiosLaden();
-    if (n) zeigeSync(n + ' vom Server geholt');
-    const pos = await positionHolen();
-    if (pos && pos.kategorie) { kat = pos.kategorie; idx = pos.position || 0; }
+async function ladeBlock(n) {
+  if (geladeneBloecke.has(n)) return;
+  const r = await fetch('daten' + n + '.json');
+  if (!r.ok) throw new Error('daten' + n + '.json: HTTP ' + r.status);
+  DATEN = DATEN.concat(await r.json());
+  geladeneBloecke.add(n);
+}
+async function ladeRest() {
+  const info = document.getElementById('ladeinfo');
+  for (let n = 1; n < VERZ.bloecke; n++) {
+    try { await ladeBlock(n); } catch (e) { console.warn(e.message); }
+    if (info) info.textContent = DATEN.length.toLocaleString('de') + ' von ' + VERZ.gesamt.toLocaleString('de') + ' geladen …';
   }
+  if (info) info.textContent = '';
+  baueFilter();
   zeichne();
-  ladeAlle();
 }
 
-function frageName() {
-  const n = prompt('Wie heißt du? (damit man sieht, wer was geprüft hat)');
-  if (n) { ICH = n.trim(); localStorage.setItem('lb_name', ICH); }
-}
 function setKat(k) {
   kat = k; idx = 0;
   document.querySelectorAll('#filter button').forEach(b => b.classList.remove('aktiv'));
-  document.getElementById('k_' + k)?.classList.add('aktiv');
+  const b = document.getElementById('k_' + k);
+  if (b) { b.classList.add('aktiv'); b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }
   positionMerken(); zeichne();
 }
 function toggleOffen() {
@@ -450,5 +458,55 @@ function blaettern(n) {
   idx = Math.max(0, Math.min(l.length - 1, idx + n));
   positionMerken(); zeichne();
 }
+function frageName() {
+  const n = prompt('Wie heißt du? (damit man sieht, wer was geprüft hat)', ICH);
+  if (n !== null) {
+    ICH = n.trim();
+    try { localStorage.setItem('lb_name', ICH); } catch (e) { }
+    const b = document.getElementById('nameBtn');
+    if (b) b.textContent = ICH ? '👤 ' + ICH : 'Name setzen';
+    zeichne();
+  }
+}
 
-los();
+async function los() {
+  try {
+    DB = await oeffneDB();
+    if (!DB) zeigeFehler('<b>Lokaler Speicher nicht verfügbar.</b> Es wird trotzdem angezeigt, aber nichts gespeichert. Privates Fenster? Dann normal öffnen.');
+    korr = (await hole('korr', 'alle')) || {};
+
+    ONLINE = !!(window.CONFIG && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY);
+    const s = document.getElementById('sync');
+    s.textContent = ONLINE ? '☁ verbunden' : '○ dieses Gerät';
+    s.classList.toggle('online', ONLINE);
+    const nb = document.getElementById('nameBtn');
+    if (nb && ICH) nb.textContent = '👤 ' + ICH;
+
+    const rv = await fetch('verzeichnis.json');
+    if (!rv.ok) throw new Error('verzeichnis.json: HTTP ' + rv.status);
+    VERZ = await rv.json();
+
+    await ladeBlock(0);
+    baueFilter();
+    setKat('behoerde');
+    await zeichne();
+
+    if (ONLINE) {
+      const n = await zentralLaden();
+      await zentraleAudiosLaden();
+      if (n) zeigeSync('☁ ' + n + ' geholt', 3000);
+      const pos = await positionHolen();
+      if (pos && pos.kategorie) { kat = pos.kategorie; idx = pos.position || 0; setKat(kat); }
+      zeichne();
+    }
+    ladeRest();
+  } catch (err) {
+    zeigeFehler('<b>Fehler beim Laden:</b> ' + err.message +
+      '<br>Bitte einmal mit Strg+F5 neu laden. Bleibt es, schickt mir diese Meldung.');
+    const k = document.getElementById('karte');
+    if (k) k.innerHTML = '<p class="leer">Konnte nicht geladen werden.</p>';
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', los);
+else los();
