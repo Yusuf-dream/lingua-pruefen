@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>Lingua Bridge — Prüfen &amp; Aufnehmen</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F4F3F0;color:#1B1B1B;
+ font:17px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+ padding-bottom:150px;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #DCDCDC;padding:10px 14px}
+.zeile{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.titel{font-weight:700}
+.stat{font-size:13px;color:#6B6B6B}
+.leiste{height:6px;background:#E4E4E4;border-radius:99px;overflow:hidden}
+.leiste div{height:100%;background:#2E7D32;border-radius:99px;transition:width .4s}
+#suchfeld{width:100%;margin-top:8px;padding:11px 13px;border:1px solid #D0D0D0;border-radius:9px;font-size:16px}
+#filter{display:flex;gap:7px;overflow-x:auto;padding:11px 14px;-webkit-overflow-scrolling:touch}
+#filter button{flex:0 0 auto;padding:8px 13px;border:1px solid #D8D8D8;background:#fff;color:#4A4A4A;
+ border-radius:99px;font-size:14px;cursor:pointer;white-space:nowrap}
+#filter button.aktiv{background:#1B1B1B;color:#fff;border-color:#1B1B1B}
+.werkzeuge{padding:0 14px 10px}
+.werkzeuge button{padding:8px 13px;border:1px solid #D8D8D8;background:#fff;border-radius:9px;font-size:14px;cursor:pointer}
+.werkzeuge button.aktiv{background:#2E7D32;color:#fff;border-color:#2E7D32}
+main{padding:0 14px}
+#karte{background:#fff;border:1px solid #DCDCDC;border-radius:14px;padding:16px}
+.kopfzeile{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.zaehler{font-size:13px;color:#8A8A8A}
+.warn{background:#FFF1E0;color:#B45309;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
+.dezeile{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;
+ border-bottom:1px solid #EEE;padding-bottom:12px}
+.de{font-size:23px;font-weight:700;line-height:1.2}
+.fehlt{font-size:15px;font-weight:400;color:#B45309;font-style:italic}
+.pl{font-size:14px;color:#767676}
+.en{font-size:14px;color:#5A5A5A;margin-top:3px}
+.rund{width:48px;height:48px;min-width:48px;border-radius:50%;border:1px solid #CCC;
+ background:#fff;font-size:20px;cursor:pointer}
+.notiz{margin-top:12px;background:#FFF8E8;border-left:4px solid #B45309;
+ padding:9px 12px;font-size:14px;color:#6E4200;border-radius:0 7px 7px 0}
+.block{margin-top:14px;padding:12px;border-radius:11px}
+.block.gruen{background:#EFF6F1}
+.block.orange{background:#FDF4E9}
+.blabel{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:7px}
+.gruen .blabel{color:#2E7D32}
+.orange .blabel{color:#B45309}
+.feld{width:100%;padding:13px;border:1px solid #CFCFCF;border-radius:9px;font-size:16px;
+ background:#fff;font-family:inherit;margin-top:2px}
+.feld.gross{font-size:19px;font-weight:600}
+.feld:focus{outline:none;border-color:#1B1B1B}
+textarea.feld{margin-top:13px;resize:none}
+.audio{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.audio button{padding:11px 14px;border:1px solid #CFCFCF;background:#fff;border-radius:9px;
+ font-size:14px;font-weight:600;cursor:pointer;min-height:44px}
+.audio button.gruen{background:#2E7D32;color:#fff;border-color:#2E7D32}
+.audio button.orange{background:#B45309;color:#fff;border-color:#B45309}
+.audio button.rot{background:#C62828;color:#fff;border-color:#C62828}
+.audio button.loesch{color:#C62828;border-color:#E8C4C4}
+.pulsi{color:#C62828;font-size:14px;align-self:center;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.35}}
+.urteile{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}
+.urteile button{padding:13px 0;border:1px solid #DDD;background:#fff;border-radius:9px;
+ font-size:14px;font-weight:700;cursor:pointer;color:#555}
+.urteile button.aktiv.ok{background:#2E7D32;color:#fff;border-color:#2E7D32}
+.urteile button.aktiv.falsch{background:#C62828;color:#fff;border-color:#C62828}
+.urteile button.aktiv.unklar{background:#B45309;color:#fff;border-color:#B45309}
+.blaettern{display:flex;gap:11px;margin-top:13px}
+.blaettern button{flex:1;padding:15px 0;border-radius:11px;font-size:16px;font-weight:700;cursor:pointer;border:1px solid #DDD;background:#fff}
+.blaettern button:last-child{background:#1B1B1B;color:#fff;border-color:#1B1B1B}
+.blaettern button:disabled{opacity:.35;cursor:default}
+.leer{text-align:center;color:#8A8A8A;padding:50px 0}
+footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #DCDCDC;padding:10px 14px}
+.fbtn{display:flex;gap:8px;flex-wrap:wrap}
+.fbtn button,.fbtn label{flex:1;min-width:120px;padding:12px 8px;border-radius:10px;font-size:14px;
+ font-weight:700;cursor:pointer;text-align:center;border:1px solid #DDD;background:#fff}
+.fbtn button.haupt{background:#2E7D32;color:#fff;border-color:#2E7D32}
+.hinw{text-align:center;font-size:12px;color:#8A8A8A;margin-top:7px}
+@media(min-width:760px){main,header,#filter,.werkzeuge,footer>*{max-width:720px;margin-left:auto;margin-right:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div class="zeile">
+    <span class="titel">Prüfen &amp; Aufnehmen</span>
+    <span class="stat"><span id="fortschritt">0 / 0</span> · 🎙 <span id="mitAudio">0</span></span>
+  </div>
+  <div class="leiste"><div id="balken" style="width:0"></div></div>
+  <input id="suchfeld" placeholder="Suchen …" oninput="suchen(this.value)">
+</header>
+
+<div id="filter"></div>
+<div class="werkzeuge"><button id="offenBtn" onclick="toggleOffen()">nur ungeprüfte</button></div>
+
+<main>
+  <div id="karte"><p class="leer">Wird geladen …</p></div>
+  <div class="blaettern">
+    <button id="zurueck" onclick="blaettern(-1)">← Zurück</button>
+    <button id="weiter" onclick="blaettern(1)">Weiter →</button>
+  </div>
+</main>
+
+<footer>
+  <div class="fbtn">
+    <button class="haupt" onclick="exportJSON()">⤓ Sichern</button>
+    <label>⤒ Laden<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+    <button onclick="alleAudios()">🎙 Alle Audios</button>
+    <button onclick="kopiereText()">Text kopieren</button>
+  </div>
+  <p class="hinw">Speichert automatisch im Browser · Zum Weitergeben „Sichern" nutzen</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
