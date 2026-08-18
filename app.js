@@ -1,10 +1,20 @@
-/* Lingua Bridge — Prüf- und Aufnahmewerkzeug (eigenständig, ohne Server) */
-let DB = null, DATEN = [], korr = {}, kat = 'behoerde', nurOffen = false, idx = 0, suche = '';
+/* ===========================================================================
+   Lingua Bridge — Prüf- und Aufnahmewerkzeug
+   ---------------------------------------------------------------------------
+   Speichert immer lokal (IndexedDB) und zusätzlich zentral (Supabase),
+   sobald in config.js Zugangsdaten hinterlegt sind. Damit setzt man auf
+   jedem Gerät genau dort fort, wo man aufgehört hat.
+   ========================================================================= */
 
-/* ---- IndexedDB: Aufnahmen und Korrekturen ---- */
+let DB = null, DATEN = [], korr = {}, VERZ = null, sb = null;
+let kat = 'behoerde', nurOffen = false, idx = 0, suche = '';
+let ICH = localStorage.getItem('lb_name') || '';
+let ONLINE = false, geladeneBloecke = new Set();
+
+/* ---------------------------------------------------- IndexedDB (lokal) */
 function oeffneDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('linguabridge', 1);
+    const r = indexedDB.open('linguabridge', 2);
     r.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('audio')) db.createObjectStore('audio');
@@ -14,35 +24,136 @@ function oeffneDB() {
     r.onerror = () => rej(r.error);
   });
 }
-function put(store, key, val) {
-  return new Promise((res, rej) => {
-    const t = DB.transaction(store, 'readwrite');
-    t.objectStore(store).put(val, key);
-    t.oncomplete = res; t.onerror = () => rej(t.error);
+const tx = (s, m) => DB.transaction(s, m).objectStore(s);
+function put(s, k, v) { return new Promise(r => { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).put(v, k); t.oncomplete = r; t.onerror = r; }); }
+function get(s, k) { return new Promise(r => { const q = tx(s, 'readonly').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(undefined); }); }
+function del(s, k) { return new Promise(r => { const t = DB.transaction(s, 'readwrite'); t.objectStore(s).delete(k); t.oncomplete = r; t.onerror = r; }); }
+function alleKeys(s) { return new Promise(r => { const q = tx(s, 'readonly').getAllKeys(); q.onsuccess = () => r(q.result || []); q.onerror = () => r([]); }); }
+
+/* ------------------------------------------------------ Supabase (zentral) */
+async function sbAnfrage(pfad, opt = {}) {
+  if (!ONLINE) return null;
+  const r = await fetch(CONFIG.SUPABASE_URL + '/rest/v1/' + pfad, {
+    ...opt,
+    headers: {
+      apikey: CONFIG.SUPABASE_KEY,
+      Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=minimal',
+      ...(opt.headers || {})
+    }
   });
-}
-function get(store, key) {
-  return new Promise((res) => {
-    const t = DB.transaction(store, 'readonly');
-    const q = t.objectStore(store).get(key);
-    q.onsuccess = () => res(q.result); q.onerror = () => res(undefined);
-  });
-}
-function del(store, key) {
-  return new Promise(res => {
-    const t = DB.transaction(store, 'readwrite');
-    t.objectStore(store).delete(key); t.oncomplete = res; t.onerror = res;
-  });
-}
-function alleKeys(store) {
-  return new Promise(res => {
-    const t = DB.transaction(store, 'readonly');
-    const q = t.objectStore(store).getAllKeys();
-    q.onsuccess = () => res(q.result || []); q.onerror = () => res([]);
-  });
+  if (!r.ok) throw new Error(await r.text());
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
 }
 
-/* ---- Deutsch vorlesen ---- */
+async function zentralLaden() {
+  if (!ONLINE) return;
+  try {
+    const rows = await sbAnfrage('korrekturen?select=*&limit=100000', {
+      headers: { Prefer: 'return=representation' }
+    });
+    let n = 0;
+    (rows || []).forEach(r => {
+      const lokal = korr[r.eintrag_id];
+      const zentralNeuer = !lokal || !lokal._zeit || new Date(r.geaendert_am) > new Date(lokal._zeit);
+      if (zentralNeuer) {
+        korr[r.eintrag_id] = {
+          de: r.de || undefined, so: r.so || undefined, ymm: r.ymm || undefined,
+          urteil: r.urteil || undefined, notiz: r.notiz || undefined,
+          _zeit: r.geaendert_am, _wer: r.bearbeiter
+        };
+        n++;
+      }
+    });
+    await put('korr', 'alle', korr);
+    return n;
+  } catch (e) { console.warn('Zentral laden:', e.message); return 0; }
+}
+
+async function zentralSpeichern(id) {
+  if (!ONLINE) return;
+  const p = korr[id] || {};
+  try {
+    await sbAnfrage('korrekturen', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{
+        eintrag_id: id, de: p.de ?? null, so: p.so ?? null, ymm: p.ymm ?? null,
+        urteil: p.urteil ?? null, notiz: p.notiz ?? null,
+        bearbeiter: ICH || 'unbekannt', team_code: CONFIG.TEAM_CODE
+      }])
+    });
+    zeigeSync('gespeichert');
+  } catch (e) { zeigeSync('nur lokal'); }
+}
+
+async function positionMerken() {
+  if (!ONLINE || !ICH) return;
+  try {
+    await sbAnfrage('fortschritt', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ bearbeiter: ICH, kategorie: kat, position: idx, team_code: CONFIG.TEAM_CODE }])
+    });
+  } catch (e) { /* nicht kritisch */ }
+}
+
+async function positionHolen() {
+  if (!ONLINE || !ICH) return null;
+  try {
+    const r = await sbAnfrage(`fortschritt?bearbeiter=eq.${encodeURIComponent(ICH)}&select=*`,
+      { headers: { Prefer: 'return=representation' } });
+    return r && r[0] ? r[0] : null;
+  } catch { return null; }
+}
+
+/* ------------------------------------------------------ Aufnahmen zentral */
+async function audioHochladen(key, blob) {
+  if (!ONLINE) return null;
+  const pfad = key.replace(/:/g, '_') + '.webm';
+  try {
+    const r = await fetch(CONFIG.SUPABASE_URL + '/storage/v1/object/aufnahmen/' + pfad, {
+      method: 'POST',
+      headers: {
+        apikey: CONFIG.SUPABASE_KEY,
+        Authorization: 'Bearer ' + CONFIG.SUPABASE_KEY,
+        'Content-Type': 'audio/webm',
+        'x-upsert': 'true'
+      },
+      body: blob
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const [, eid, varietaet] = key.split(':');
+    await sbAnfrage('aufnahmen', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{
+        eintrag_id: eid, varietaet, pfad, sprecher: ICH || 'unbekannt',
+        bytes: blob.size, team_code: CONFIG.TEAM_CODE
+      }])
+    });
+    return pfad;
+  } catch (e) { console.warn('Audio hoch:', e.message); return null; }
+}
+
+let zentraleAudios = new Map();
+async function zentraleAudiosLaden() {
+  if (!ONLINE) return;
+  try {
+    const r = await sbAnfrage('aufnahmen?select=eintrag_id,varietaet,pfad,sprecher', {
+      headers: { Prefer: 'return=representation' }
+    });
+    zentraleAudios = new Map((r || []).map(a => ['audio:' + a.eintrag_id + ':' + a.varietaet, a]));
+  } catch { /* egal */ }
+}
+function audioUrl(key) {
+  const a = zentraleAudios.get(key);
+  return a ? CONFIG.SUPABASE_URL + '/storage/v1/object/public/aufnahmen/' + a.pfad : null;
+}
+
+/* ------------------------------------------------------------- Vorlesen */
 function sprich(t) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
@@ -50,7 +161,7 @@ function sprich(t) {
   u.lang = 'de-DE'; u.rate = 0.85; speechSynthesis.speak(u);
 }
 
-/* ---- Aufnahme ---- */
+/* ------------------------------------------------------------- Aufnahme */
 const rec = {};
 async function starteAufnahme(key, btnId) {
   try {
@@ -64,6 +175,8 @@ async function starteAufnahme(key, btnId) {
       await put('audio', key, blob);
       rec[key] = null;
       zeichne();
+      const p = await audioHochladen(key, blob);
+      if (p) { await zentraleAudiosLaden(); zeigeSync('Aufnahme hochgeladen'); zeichne(); }
     };
     mr.start();
     rec[key] = { mr, start: Date.now() };
@@ -72,18 +185,23 @@ async function starteAufnahme(key, btnId) {
     rec[key].timer = setInterval(() => {
       if (el && rec[key]) el.textContent = '\u23F9 Stopp \u00B7 ' + Math.floor((Date.now() - rec[key].start) / 1000) + 's';
     }, 500);
-  } catch (e) { alert('Kein Mikrofonzugriff. Bitte im Browser erlauben.'); }
+  } catch { alert('Kein Mikrofonzugriff. Bitte im Browser erlauben.'); }
 }
-function stoppeAufnahme(key) {
-  if (rec[key]) { clearInterval(rec[key].timer); rec[key].mr.stop(); }
-}
+function stoppeAufnahme(key) { if (rec[key]) { clearInterval(rec[key].timer); rec[key].mr.stop(); } }
+
 async function spieleAb(key) {
   const b = await get('audio', key);
-  if (b) new Audio(URL.createObjectURL(b)).play();
+  if (b) { new Audio(URL.createObjectURL(b)).play(); return; }
+  const u = audioUrl(key);
+  if (u) new Audio(u).play();
 }
 async function ladeRunter(key, wort) {
-  const b = await get('audio', key);
-  if (!b) return;
+  let b = await get('audio', key);
+  if (!b) {
+    const u = audioUrl(key);
+    if (!u) return;
+    b = await (await fetch(u)).blob();
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
   a.download = key.replace(/:/g, '_') + '_' + (wort || '').replace(/[^\wäöüßÄÖÜ-]/g, '') + '.webm';
@@ -91,76 +209,98 @@ async function ladeRunter(key, wort) {
 }
 async function loescheAudio(key) { await del('audio', key); zeichne(); }
 
-/* ---- Korrekturen speichern ---- */
-let sichern;
-async function setze(id, feld, wert) {
+/* ---------------------------------------------------------- Korrekturen */
+let sichernTimer, sbTimer;
+function setze(id, feld, wert) {
   korr[id] = korr[id] || {};
   korr[id][feld] = wert;
-  clearTimeout(sichern);
-  sichern = setTimeout(() => put('korr', 'alle', korr), 400);
+  korr[id]._zeit = new Date().toISOString();
+  clearTimeout(sichernTimer);
+  sichernTimer = setTimeout(() => put('korr', 'alle', korr), 400);
+  clearTimeout(sbTimer);
+  sbTimer = setTimeout(() => zentralSpeichern(id), 1200);
 }
 async function urteil(id, wert) {
-  await setze(id, 'urteil', wert);
+  setze(id, 'urteil', wert);
+  await put('korr', 'alle', korr);
+  zentralSpeichern(id);
   const l = liste();
   if (idx < l.length - 1) idx++;
+  positionMerken();
   zeichne();
 }
 
-/* ---- Liste filtern ---- */
+/* --------------------------------------------------------------- Filter */
 function liste() {
   let l = kat === 'alle' ? DATEN : DATEN.filter(d => d.k === kat);
   if (nurOffen) l = l.filter(d => !(korr[d.i] || {}).urteil);
   if (suche) {
     const s = suche.toLowerCase();
-    l = l.filter(d => (d.de + d.en + d.so + d.ymm).toLowerCase().includes(s));
+    l = l.filter(d => ((d.de || '') + (d.en || '') + d.so + (d.ymm || '')).toLowerCase().includes(s));
   }
   return l;
 }
 
-/* ---- Zeichnen ---- */
-let audioKeys = new Set();
+/* ------------------------------------------------------------- Zeichnen */
+let lokaleAudios = new Set();
+function zeigeSync(t) {
+  const el = document.getElementById('sync');
+  if (el) { el.textContent = t; setTimeout(() => { if (el.textContent === t) el.textContent = ONLINE ? '\u2601 verbunden' : '\u25CB nur dieses Gerät'; }, 2200); }
+}
+
 async function zeichne() {
-  audioKeys = new Set(await alleKeys('audio'));
+  lokaleAudios = new Set(await alleKeys('audio'));
   const l = liste();
   if (idx >= l.length) idx = Math.max(0, l.length - 1);
   const e = l[idx];
-  const fertig = DATEN.filter(d => (korr[d.i] || {}).urteil).length;
+  const fertig = Object.values(korr).filter(p => p.urteil).length;
 
-  document.getElementById('fortschritt').textContent = fertig + ' / ' + DATEN.length;
-  document.getElementById('balken').style.width = (fertig / DATEN.length * 100) + '%';
-  document.getElementById('mitAudio').textContent = audioKeys.size;
+  document.getElementById('fortschritt').textContent = fertig.toLocaleString('de') + ' / ' + DATEN.length.toLocaleString('de');
+  document.getElementById('balken').style.width = Math.min(100, fertig / DATEN.length * 100) + '%';
+  document.getElementById('mitAudio').textContent = new Set([...lokaleAudios, ...zentraleAudios.keys()]).size;
 
   if (!e) { document.getElementById('karte').innerHTML = '<p class="leer">Nichts gefunden.</p>'; return; }
   const p = korr[e.i] || {};
   const kSo = 'audio:' + e.i + ':so', kYmm = 'audio:' + e.i + ':ymm';
   const soWert = p.so !== undefined ? p.so : e.so;
-  const ymmWert = p.ymm !== undefined ? p.ymm : e.ymm;
+  const ymmWert = p.ymm !== undefined ? p.ymm : (e.ymm || '');
+  const deWert = p.de !== undefined ? p.de : e.de;
+  const esc = s => (s || '').replace(/"/g, '&quot;');
+  const langerText = e.so && e.so.length > 60;
 
   document.getElementById('karte').innerHTML = `
     <div class="kopfzeile">
-      <span class="zaehler">${idx + 1} von ${l.length}</span>
-      ${e.u ? '<span class="warn">unsicher</span>' : ''}
+      <span class="zaehler">${(idx + 1).toLocaleString('de')} von ${l.length.toLocaleString('de')}</span>
+      <span>
+        ${e.u ? '<span class="warn">unsicher</span>' : ''}
+        ${p._wer && p._wer !== ICH ? `<span class="wer">${p._wer}</span>` : ''}
+      </span>
     </div>
     <div class="dezeile">
-      <div>
-        <div class="de">${e.de || '<span class="fehlt">Deutsch fehlt \u2014 bitte eintragen</span>'}</div>
-        ${e.pl ? `<div class="pl">Plural: ${e.pl}</div>` : ''}
-        <div class="en">EN \u00B7 ${e.en || '\u2014'}</div>
+      <div style="flex:1">
+        ${deWert
+          ? `<div class="de">${deWert}</div>${e.pl ? `<div class="pl">Plural: ${e.pl}</div>` : ''}`
+          : `<div class="fehlt">Deutsche Übersetzung fehlt</div>`}
+        ${e.en ? `<div class="en">EN \u00B7 ${e.en}</div>` : ''}
       </div>
-      ${e.de ? `<button class="rund" onclick="sprich('${(e.de + (e.pl ? ', ' + e.pl : '')).replace(/'/g, "\\'")}')">\u{1F50A}</button>` : ''}
+      ${deWert ? `<button class="rund" onclick="sprich(${JSON.stringify(deWert + (e.pl ? ', ' + e.pl : ''))})">\u{1F50A}</button>` : ''}
     </div>
-    ${!e.de ? `<input class="feld" placeholder="Deutsche \u00DCbersetzung eintragen" value="${(p.de || '').replace(/"/g, '&quot;')}" oninput="setze('${e.i}','de',this.value)">` : ''}
+    ${!e.de ? `<input class="feld" placeholder="Deutsche \u00DCbersetzung eintragen" value="${esc(p.de)}" oninput="setze('${e.i}','de',this.value)">` : ''}
     ${e.n ? `<div class="notiz">${e.n}</div>` : ''}
 
     <div class="block gruen">
       <div class="blabel">Af-Maxaa \u00B7 Nord / Somaliland</div>
-      <input class="feld gross" value="${(soWert || '').replace(/"/g, '&quot;')}" oninput="setze('${e.i}','so',this.value)">
+      ${langerText
+        ? `<textarea class="feld gross" rows="3" oninput="setze('${e.i}','so',this.value)">${soWert || ''}</textarea>`
+        : `<input class="feld gross" value="${esc(soWert)}" oninput="setze('${e.i}','so',this.value)">`}
       ${audioZeile(kSo, soWert, 'Af-Maxaa', 'gruen')}
     </div>
 
     <div class="block orange">
       <div class="blabel">Af-Maay \u00B7 S\u00FCd</div>
-      <input class="feld gross" placeholder="Af-Maay eintragen" value="${(ymmWert || '').replace(/"/g, '&quot;')}" oninput="setze('${e.i}','ymm',this.value)">
+      ${langerText
+        ? `<textarea class="feld gross" rows="3" placeholder="Af-Maay eintragen" oninput="setze('${e.i}','ymm',this.value)">${ymmWert}</textarea>`
+        : `<input class="feld gross" placeholder="Af-Maay eintragen" value="${esc(ymmWert)}" oninput="setze('${e.i}','ymm',this.value)">`}
       ${audioZeile(kYmm, ymmWert, 'Af-Maay', 'orange')}
     </div>
 
@@ -177,23 +317,26 @@ async function zeichne() {
 }
 
 function audioZeile(key, wort, label, farbe) {
-  const hat = audioKeys.has(key);
+  const hat = lokaleAudios.has(key) || zentraleAudios.has(key);
+  const zentral = zentraleAudios.has(key) && !lokaleAudios.has(key);
   const laeuft = !!rec[key];
   const bid = 'btn_' + key.replace(/:/g, '_');
-  if (laeuft) return `<div class="audio"><button id="${bid}" class="rot" onclick="stoppeAufnahme('${key}')">\u23F9 Stopp \u00B7 0s</button><span class="pulsi">\u25CF Aufnahme l\u00E4uft</span></div>`;
+  if (laeuft) return `<div class="audio"><button id="${bid}" class="rot" onclick="stoppeAufnahme('${key}')">\u23F9 Stopp \u00B7 0s</button><span class="pulsi">\u25CF Aufnahme läuft</span></div>`;
   return `<div class="audio">
     <button class="${farbe}" onclick="starteAufnahme('${key}','${bid}')">\u{1F399} ${hat ? 'Neu aufnehmen' : label + ' aufnehmen'}</button>
-    ${hat ? `<button onclick="spieleAb('${key}')">\u25B6 Anh\u00F6ren</button>
-             <button onclick="ladeRunter('${key}','${(wort || '').replace(/'/g, "")}')">\u2913 Datei</button>
-             <button class="loesch" onclick="loescheAudio('${key}')">l\u00F6schen</button>` : ''}
+    ${hat ? `<button onclick="spieleAb('${key}')">\u25B6 Anhören${zentral ? ' \u2601' : ''}</button>
+             <button onclick="ladeRunter('${key}',${JSON.stringify(wort || '')})">\u2913 Datei</button>
+             ${lokaleAudios.has(key) ? `<button class="loesch" onclick="loescheAudio('${key}')">lokal löschen</button>` : ''}` : ''}
   </div>`;
 }
 
-/* ---- Export / Import ---- */
-async function exportJSON() {
-  const blob = new Blob([JSON.stringify(korr, null, 1)], { type: 'application/json' });
+/* ------------------------------------------------------- Export / Import */
+function exportJSON() {
+  const rein = {};
+  for (const k in korr) { const { _zeit, _wer, ...rest } = korr[k]; if (Object.keys(rest).length) rein[k] = rest; }
+  const b = new Blob([JSON.stringify(rein, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(b);
   a.download = 'lingua-korrekturen-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click();
 }
@@ -202,65 +345,99 @@ async function importJSON(ev) {
   try {
     const neu = JSON.parse(await f.text());
     let n = 0;
-    for (const k in neu) { korr[k] = { ...(korr[k] || {}), ...neu[k] }; n++; }
+    for (const k in neu) { korr[k] = { ...(korr[k] || {}), ...neu[k], _zeit: new Date().toISOString() }; n++; }
     await put('korr', 'alle', korr);
-    alert(n + ' Eintr\u00E4ge \u00FCbernommen.');
+    if (ONLINE) for (const k in neu) await zentralSpeichern(k);
+    alert(n + ' Einträge übernommen.');
     zeichne();
   } catch { alert('Datei konnte nicht gelesen werden.'); }
   ev.target.value = '';
 }
 async function alleAudios() {
-  const keys = await alleKeys('audio');
+  const keys = [...new Set([...lokaleAudios, ...zentraleAudios.keys()])];
   if (!keys.length) return alert('Noch keine Aufnahmen.');
   if (!confirm(keys.length + ' Aufnahmen herunterladen?')) return;
-  for (let n = 0; n < keys.length; n++) {
-    const e = DATEN.find(d => keys[n].startsWith('audio:' + d.i + ':'));
-    await ladeRunter(keys[n], e ? (keys[n].endsWith(':so') ? e.so : e.ymm) : '');
+  for (const k of keys) {
+    const e = DATEN.find(d => k.startsWith('audio:' + d.i + ':'));
+    await ladeRunter(k, e ? (k.endsWith(':so') ? e.so : e.ymm) : '');
     await new Promise(r => setTimeout(r, 250));
   }
 }
-function kopiereText() {
-  const z = DATEN.filter(d => korr[d.i]).map(d => {
-    const p = korr[d.i];
-    return [p.de || d.de, d.en, p.so !== undefined ? p.so : d.so,
-            p.ymm !== undefined ? p.ymm : d.ymm, p.urteil || '', p.notiz || ''].join(' | ');
-  });
-  navigator.clipboard.writeText(
-    'Lingua Bridge \u2014 Korrekturen\nDeutsch | Englisch | Af-Maxaa | Af-Maay | Urteil | Notiz\n' +
-    '='.repeat(76) + '\n' + z.join('\n')
-  ).then(() => alert(z.length + ' Zeilen kopiert.'));
+
+/* ------------------------------------------------------------ Laden */
+async function ladeBlock(n) {
+  if (geladeneBloecke.has(n)) return;
+  const r = await fetch(`daten${n}.json`);
+  DATEN = DATEN.concat(await r.json());
+  geladeneBloecke.add(n);
+}
+async function ladeAlle() {
+  for (let n = 0; n < VERZ.bloecke; n++) {
+    await ladeBlock(n);
+    document.getElementById('ladeinfo').textContent =
+      `${DATEN.length.toLocaleString('de')} von ${VERZ.gesamt.toLocaleString('de')} geladen`;
+  }
+  document.getElementById('ladeinfo').textContent = '';
+  baueFilter();
+  zeichne();
 }
 
-/* ---- Start ---- */
+const NAMEN = { behoerde:'Behörde', nordsued:'Nord/Süd', begruessung:'Begrüßung', zahlen:'Zahlen',
+  zeit:'Zeit', gesundheit:'Gesundheit', familie:'Familie', weg:'Weg', arbeit:'Arbeit',
+  substantive:'Substantive', verben:'Verben', adjektive:'Adjektive', zahlwoerter:'Zahlwörter',
+  pronomen:'Pronomen', adverbien:'Adverbien', praepositionen:'Präpositionen',
+  konjunktionen:'Konjunktionen', partikeln:'Partikeln', artikelwoerter:'Artikelwörter',
+  interjektionen:'Interjektionen', suffixe:'Suffixe', eigennamen:'Eigennamen',
+  buchstaben:'Buchstaben', saetze:'Sätze', korpus_saetze:'Korpus-Sätze',
+  korpus_woerter:'Korpus-Wörter', sonstige:'Sonstige' };
+const ORD = ['behoerde','nordsued','begruessung','zahlen','zeit','gesundheit','familie','weg',
+  'arbeit','substantive','verben','adjektive','saetze','korpus_saetze','korpus_woerter',
+  'zahlwoerter','pronomen','adverbien','praepositionen','konjunktionen','partikeln',
+  'artikelwoerter','interjektionen','suffixe','eigennamen','buchstaben','sonstige'];
+
+function baueFilter() {
+  const k = {};
+  DATEN.forEach(d => k[d.k] = (k[d.k] || 0) + 1);
+  document.getElementById('filter').innerHTML =
+    `<button onclick="setKat('alle')" id="k_alle">Alle (${DATEN.length.toLocaleString('de')})</button>` +
+    ORD.filter(x => k[x]).map(x =>
+      `<button onclick="setKat('${x}')" id="k_${x}">${NAMEN[x] || x} (${k[x].toLocaleString('de')})</button>`).join('');
+  document.getElementById('k_' + kat)?.classList.add('aktiv');
+}
+
 async function los() {
   DB = await oeffneDB();
-  DATEN = await (await fetch('daten.json')).json();
   korr = (await get('korr', 'alle')) || {};
 
-  const kats = {};
-  DATEN.forEach(d => kats[d.k] = (kats[d.k] || 0) + 1);
-  const NAMEN = { behoerde:'Beh\u00F6rde', nordsued:'Nord/S\u00FCd', begruessung:'Begr\u00FC\u00DFung', zahlen:'Zahlen',
-    zeit:'Zeit', gesundheit:'Gesundheit', familie:'Familie', weg:'Weg', arbeit:'Arbeit',
-    substantive:'Substantive', verben:'Verben', adjektive:'Adjektive', zahlwoerter:'Zahlw\u00F6rter',
-    pronomen:'Pronomen', adverbien:'Adverbien', praepositionen:'Pr\u00E4positionen',
-    konjunktionen:'Konjunktionen', partikeln:'Partikeln', artikelwoerter:'Artikelw\u00F6rter',
-    interjektionen:'Interjektionen', suffixe:'Suffixe', eigennamen:'Eigennamen',
-    buchstaben:'Buchstaben', saetze:'S\u00E4tze', sonstige:'Sonstige' };
-  const ORD = ['behoerde','nordsued','begruessung','zahlen','zeit','gesundheit','familie','weg',
-    'arbeit','substantive','verben','adjektive','saetze','zahlwoerter','pronomen','adverbien',
-    'praepositionen','konjunktionen','partikeln','artikelwoerter','interjektionen','suffixe',
-    'eigennamen','buchstaben','sonstige'];
-  document.getElementById('filter').innerHTML =
-    `<button onclick="setKat('alle')" id="k_alle">Alle (${DATEN.length})</button>` +
-    ORD.filter(k => kats[k]).map(k =>
-      `<button onclick="setKat('${k}')" id="k_${k}">${NAMEN[k] || k} (${kats[k]})</button>`).join('');
+  ONLINE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY);
+  document.getElementById('sync').textContent = ONLINE ? '\u2601 verbunden' : '\u25CB nur dieses Gerät';
+  if (!ICH) frageName();
+
+  VERZ = await (await fetch('verzeichnis.json')).json();
+  await ladeBlock(0);
+  baueFilter();
   setKat('behoerde');
+
+  if (ONLINE) {
+    const n = await zentralLaden();
+    await zentraleAudiosLaden();
+    if (n) zeigeSync(n + ' vom Server geholt');
+    const pos = await positionHolen();
+    if (pos && pos.kategorie) { kat = pos.kategorie; idx = pos.position || 0; }
+  }
+  zeichne();
+  ladeAlle();
+}
+
+function frageName() {
+  const n = prompt('Wie heißt du? (damit man sieht, wer was geprüft hat)');
+  if (n) { ICH = n.trim(); localStorage.setItem('lb_name', ICH); }
 }
 function setKat(k) {
   kat = k; idx = 0;
   document.querySelectorAll('#filter button').forEach(b => b.classList.remove('aktiv'));
   document.getElementById('k_' + k)?.classList.add('aktiv');
-  zeichne();
+  positionMerken(); zeichne();
 }
 function toggleOffen() {
   nurOffen = !nurOffen; idx = 0;
@@ -268,6 +445,10 @@ function toggleOffen() {
   zeichne();
 }
 function suchen(v) { suche = v; idx = 0; zeichne(); }
-function blaettern(n) { const l = liste(); idx = Math.max(0, Math.min(l.length - 1, idx + n)); zeichne(); }
+function blaettern(n) {
+  const l = liste();
+  idx = Math.max(0, Math.min(l.length - 1, idx + n));
+  positionMerken(); zeichne();
+}
 
 los();
