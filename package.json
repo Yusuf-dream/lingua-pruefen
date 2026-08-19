@@ -1,0 +1,24 @@
+{
+  "name": "lingua-pruefen",
+  "version": "1.0.0",
+  "description": "Werkzeug zur muttersprachlichen Prüfung von Somali-Wortdaten. 1.323 Einträge in Deutsch, Englisch, Af-Maxaa (Nord/Somaliland) und Af-Maay (Süd).",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yusuf-dream/lingua-pruefen.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Yusuf-dream/lingua-pruefen/issues"
+  },
+  "homepage": "https://github.com/Yusuf-dream/lingua-pruefen#readme",
+  "dependencies": {
+    "puppeteer-core": "^25.8.0"
+  }
+}

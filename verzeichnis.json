@@ -1,6 +1,6 @@
 {
  "bloecke": 17,
- "gesamt": 65637,
+ "gesamt": 67034,
  "proBlock": 4000,
  "kategorien": {
   "behoerde": 18,
@@ -29,6 +29,19 @@
   "adverbien": 9,
   "saetze": 117,
   "korpus_saetze": 19964,
-  "korpus_woerter": 44350
+  "korpus_woerter": 44350,
+  "thema_tiere": 25,
+  "thema_essen": 28,
+  "thema_getraenke": 8,
+  "thema_farben": 9,
+  "thema_koerper": 22,
+  "thema_kleidung": 11,
+  "thema_haus": 15,
+  "thema_natur": 19,
+  "thema_verkehr": 8,
+  "thema_alltag": 18,
+  "thema_verben": 26,
+  "alphabet": 27,
+  "zahlen_alle": 1181
  }
 }
