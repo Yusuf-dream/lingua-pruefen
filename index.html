@@ -732,13 +732,47 @@ async function alleAudios(){const keys=[...new Set([...lokaleAudios,...zentraleA
     await ladeRunter(k,e?(k.slice(-3)===':so'?e.so:e.ymm):'');await new Promise(r=>setTimeout(r,250));}}
 
 /* ---------- Laden ---------- */
-async function ladeBlock(n){if(geladen.has(n))return;
-  const r=await fetch('daten'+n+'.json?v=5');if(!r.ok)throw new Error('daten'+n+' HTTP '+r.status);
-  DATEN=DATEN.concat(await r.json());geladen.add(n);}
-async function ladeRest(){const i=$('ladeinfo');
-  for(let n=1;n<VERZ.bloecke;n++){try{await ladeBlock(n);}catch(e){console.warn(e.message);}
-    if(i)i.textContent=DATEN.length.toLocaleString('de')+' / '+VERZ.gesamt.toLocaleString('de')+' geladen';}
-  if(i)i.textContent='';zeichne();}
+async function ladeBlock(n,versuche){
+  if(geladen.has(n))return;
+  versuche=versuche||4;
+  let letzterFehler=null;
+  for(let v=0;v<versuche;v++){
+    try{
+      const r=await fetch('daten'+n+'.json?v=5');
+      if(r.ok){ DATEN=DATEN.concat(await r.json()); geladen.add(n); return; }
+      letzterFehler='HTTP '+r.status;
+    }catch(e){ letzterFehler=e.message; }
+    await new Promise(r=>setTimeout(r,400*(v+1)));   // 400, 800, 1200 ms
+  }
+  throw new Error('daten'+n+': '+letzterFehler);
+}
+async function ladeRest(){
+  const i=$('ladeinfo');
+  const gescheitert=[];
+  for(let n=1;n<VERZ.bloecke;n++){
+    try{ await ladeBlock(n); }
+    catch(e){ gescheitert.push(n); console.warn(e.message); }
+    if(i)i.textContent=DATEN.length.toLocaleString('de')+' / '+VERZ.gesamt.toLocaleString('de')+' geladen';
+    await new Promise(r=>setTimeout(r,120));   // Server nicht ueberrennen
+  }
+  if(gescheitert.length){
+    zeigeFehler('<b>'+gescheitert.length+' Datenblock/-bloecke fehlen.</b> '+
+      'Es fehlen dadurch einige Eintraege. '+
+      '<button onclick="nachladen()" style="margin-left:8px;padding:5px 11px;border:1px solid currentColor;'+
+      'background:transparent;color:inherit;border-radius:3px;cursor:pointer;font:600 11px monospace;'+
+      'letter-spacing:.09em;text-transform:uppercase">nochmal versuchen</button>');
+  }
+  if(i)i.textContent='';
+  zeichne();
+}
+async function nachladen(){
+  $('fehler').style.display='none';
+  for(let n=0;n<VERZ.bloecke;n++){
+    if(geladen.has(n))continue;
+    try{ await ladeBlock(n,5); }catch(e){ console.warn(e.message); }
+  }
+  zeichne();
+}
 function suchen(v){suche=v;idx=0;zeichne();}
 function blaettern(n){const l=liste();idx=Math.max(0,Math.min(l.length-1,idx+n));positionMerken();zeichne();}
 function anmelden(){const v=$('namefeld').value.trim();if(!v){$('namefeld').focus();return;}
