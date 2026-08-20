@@ -5,225 +5,285 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lingo Check</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta name="theme-color" content="#0B3B45">
+<meta name="theme-color" content="#14120F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ===========================================================================
+   LINGO CHECK — Mischpult
+   Herleitung: Dies ist kein Formular, sondern ein Tonstudio. Zwei Sprach-
+   varietäten = zwei Kanäle. Dunkel, weil hier stundenlang gearbeitet wird.
+   Somali in Schreibmaschinenschrift, weil es das bearbeitete Material ist.
+   Die eine Kühnheit: die echte Wellenform beim Aufnehmen.
+   ========================================================================= */
 :root{
-  --bg:#FBF8F3; --bg2:#F2EBE1; --karte:#fff; --kante:#E6DCCB;
-  --tinte:#12252B; --tinte2:#4C6068; --tinte3:#8798A0;
-  --petrol:#0B3B45; --petrol2:#155B6B;
-  --koralle:#E2542B; --koralle2:#C4441F;
-  --gruen:#2C6A4C; --gruenF:#E7F1EA;
-  --amber:#B0700A; --amberF:#FAEFDA;
-  --rot:#AE251D;
-  --sch1:0 1px 2px rgba(18,37,43,.05),0 6px 18px rgba(18,37,43,.06);
-  --sch2:0 2px 6px rgba(18,37,43,.07),0 16px 44px rgba(18,37,43,.10);
+  --grund:#14120F;        /* warmes Fast-Schwarz, braunstichig */
+  --pult:#1D1A15;         /* Pultfläche */
+  --pult2:#262119;        /* erhoben */
+  --linie:#332D24;
+  --schrift:#EFE9DE;      /* warmes Elfenbein */
+  --schrift2:#A79E90;
+  --schrift3:#6F675C;
+  --maxaa:#4FB286;        /* Kanal 1 — Jade */
+  --maay:#E0A458;         /* Kanal 2 — Ocker */
+  --rec:#D64933;          /* Aufnahme, Studiokonvention */
+  --papier:#F5F0E6;       /* Deutsch = die Quelle, hell wie ein Blatt */
+  --tinte:#14120F;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;padding:0 0 152px;color:var(--tinte);
- font:17px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
- background:radial-gradient(1200px 520px at 12% -8%,rgba(11,59,69,.08),transparent 62%),
-  radial-gradient(950px 440px at 92% 2%,rgba(226,84,43,.075),transparent 62%),var(--bg);
+body{margin:0;padding:0 0 116px;background:var(--grund);color:var(--schrift);
+ font:16px/1.5 "IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+ background-image:
+   radial-gradient(1000px 460px at 50% -14%,rgba(79,178,134,.055),transparent 60%),
+   radial-gradient(760px 380px at 92% 8%,rgba(224,164,88,.05),transparent 60%);
  background-attachment:fixed}
-body.offen{overflow:hidden}
-.mitte{width:100%;max-width:760px;margin-left:auto;margin-right:auto;padding-left:18px;padding-right:18px}
-@keyframes rein{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}
-@keyframes blitzGut{0%{background:#E4F1EA;border-color:var(--gruen)}100%{background:var(--karte);border-color:var(--kante)}}
-@keyframes puls{0%{box-shadow:0 0 0 0 rgba(174,37,29,.45)}70%{box-shadow:0 0 0 15px rgba(174,37,29,0)}100%{box-shadow:0 0 0 0 rgba(174,37,29,0)}}
-@keyframes blink{50%{opacity:.3}}
+body.gesperrt{overflow:hidden}
+.mitte{width:100%;max-width:720px;margin:0 auto;padding:0 16px}
+@keyframes hoch{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes recpuls{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes quittung{0%{border-color:var(--maxaa);box-shadow:0 0 0 1px var(--maxaa),0 0 34px rgba(79,178,134,.3)}100%{border-color:var(--linie);box-shadow:none}}
 
 /* ---------- Anmeldung ---------- */
-#tor{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:22px;
- background:radial-gradient(900px 500px at 20% 10%,rgba(11,59,69,.12),transparent 60%),
-  radial-gradient(700px 420px at 85% 85%,rgba(226,84,43,.12),transparent 60%),var(--bg)}
-.torkarte{width:100%;max-width:430px;background:var(--karte);border:1px solid var(--kante);
- border-radius:22px;padding:34px 28px;box-shadow:var(--sch2);animation:rein .5s cubic-bezier(.2,.9,.2,1)}
-.logo{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:6px}
-.logo h1{margin:0;font:800 30px/1 Fraunces,Georgia,serif;letter-spacing:-.02em}
-.torkarte .unter{text-align:center;color:var(--tinte2);font-size:15px;margin:0 0 26px}
-.torkarte label{display:block;font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--tinte3);margin:0 0 7px}
-.torkarte input{width:100%;padding:15px 16px;border:1px solid var(--kante);border-radius:12px;
- font-size:17px;font-family:inherit;background:var(--bg);transition:.18s}
-.torkarte input:focus{outline:none;border-color:var(--petrol);box-shadow:0 0 0 4px rgba(11,59,69,.10);background:#fff}
-.torbtn{width:100%;margin-top:20px;padding:16px;border:0;border-radius:12px;background:var(--koralle);
- color:#fff;font:800 17px Inter;cursor:pointer;box-shadow:0 4px 18px rgba(226,84,43,.32);transition:.16s}
-.torbtn:hover{background:var(--koralle2)} .torbtn:active{transform:scale(.98)}
-.torhinweis{margin:18px 0 0;font-size:13px;color:var(--tinte3);text-align:center;line-height:1.5}
+#tor{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+ padding:22px;background:var(--grund);
+ background-image:radial-gradient(760px 460px at 50% 18%,rgba(79,178,134,.10),transparent 62%)}
+.torkarte{width:100%;max-width:400px;animation:hoch .55s cubic-bezier(.2,.9,.2,1)}
+.torlogo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:26px}
+.wortmarke{font:400 34px/1 "Instrument Serif",Georgia,serif;letter-spacing:.005em}
+.wortmarke em{font-style:italic;color:var(--maxaa)}
+.torkarte p.unter{text-align:center;color:var(--schrift3);font:500 12px "IBM Plex Mono",monospace;
+ letter-spacing:.17em;text-transform:uppercase;margin:0 0 30px}
+.torkarte label{display:block;font:500 11px "IBM Plex Mono",monospace;letter-spacing:.15em;
+ text-transform:uppercase;color:var(--schrift3);margin:0 0 9px}
+.torkarte input{width:100%;padding:15px 16px;border:1px solid var(--linie);border-radius:3px;
+ font:500 17px "IBM Plex Mono",monospace;background:var(--pult);color:var(--schrift);transition:.18s}
+.torkarte input:focus{outline:none;border-color:var(--maxaa);box-shadow:0 0 0 3px rgba(79,178,134,.16)}
+.torbtn{width:100%;margin-top:16px;padding:16px;border:0;border-radius:3px;background:var(--maxaa);
+ color:#0C1B14;font:700 14px "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;
+ cursor:pointer;transition:.16s}
+.torbtn:hover{background:#5FC496} .torbtn:active{transform:translateY(1px)}
+.torhinweis{margin:22px 0 0;font-size:13px;color:var(--schrift3);text-align:center;line-height:1.6}
 
 /* ---------- Menü ---------- */
-#schleier{position:fixed;inset:0;background:rgba(18,37,43,.42);backdrop-filter:blur(3px);
- z-index:60;opacity:0;pointer-events:none;transition:opacity .28s}
+#schleier{position:fixed;inset:0;background:rgba(10,9,7,.66);z-index:60;opacity:0;
+ pointer-events:none;transition:opacity .26s}
 #schleier.auf{opacity:1;pointer-events:auto}
-#menue{position:fixed;top:0;left:0;bottom:0;width:315px;max-width:88vw;z-index:70;
- background:var(--karte);border-right:1px solid var(--kante);box-shadow:var(--sch2);
- transform:translateX(-100%);transition:transform .3s cubic-bezier(.2,.9,.2,1);
- display:flex;flex-direction:column}
+#menue{position:fixed;top:0;left:0;bottom:0;width:308px;max-width:87vw;z-index:70;background:var(--pult);
+ border-right:1px solid var(--linie);transform:translateX(-100%);
+ transition:transform .3s cubic-bezier(.2,.9,.2,1);display:flex;flex-direction:column}
 #menue.auf{transform:none}
-.menuekopf{padding:18px;border-bottom:1px solid var(--kante);display:flex;align-items:center;
- justify-content:space-between;gap:10px}
-.menuekopf h2{margin:0;font:800 20px Fraunces,Georgia,serif}
-.zu{width:38px;height:38px;border-radius:10px;border:1px solid var(--kante);background:var(--karte);
- font-size:19px;cursor:pointer;color:var(--tinte2)}
-.menueinhalt{flex:1;overflow-y:auto;padding:16px 14px 26px}
-.mgruppe{margin-bottom:22px}
-.mtitel{font:800 10px Inter;letter-spacing:.13em;text-transform:uppercase;color:var(--tinte3);
- margin:0 0 9px 6px}
+.menuekopf{padding:17px 16px;border-bottom:1px solid var(--linie);display:flex;
+ align-items:center;justify-content:space-between}
+.menuekopf h2{margin:0;font:400 22px "Instrument Serif",Georgia,serif}
+.zu{width:34px;height:34px;border-radius:3px;border:1px solid var(--linie);background:transparent;
+ color:var(--schrift2);font-size:16px;cursor:pointer}
+.zu:hover{border-color:var(--maxaa);color:var(--maxaa)}
+.menueinhalt{flex:1;overflow-y:auto;padding:14px 12px 26px}
+.mtitel{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.19em;text-transform:uppercase;
+ color:var(--schrift3);margin:20px 0 8px 8px}
+.mtitel:first-child{margin-top:2px}
 .meintrag{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
- padding:11px 13px;border:1px solid transparent;background:transparent;border-radius:11px;
- font:600 15px Inter;color:var(--tinte2);cursor:pointer;text-align:left;transition:.15s;margin-bottom:3px}
-.meintrag:hover{background:var(--bg2)}
-.meintrag.aktiv{background:var(--petrol);color:#fff;border-color:var(--petrol)}
-.meintrag .anz{font:700 12px Inter;opacity:.72;white-space:nowrap}
-.mtrenner{height:1px;background:var(--kante);margin:16px 6px}
+ padding:10px 12px;border:0;border-left:2px solid transparent;background:transparent;
+ font:500 14px "IBM Plex Sans",sans-serif;color:var(--schrift2);cursor:pointer;text-align:left;transition:.14s}
+.meintrag:hover{background:var(--pult2);color:var(--schrift)}
+.meintrag.aktiv{background:var(--pult2);color:var(--schrift);border-left-color:var(--maxaa)}
+.meintrag .anz{font:500 11px "IBM Plex Mono",monospace;color:var(--schrift3)}
+.meintrag.aktiv .anz{color:var(--maxaa)}
 
-/* ---------- Kopf ---------- */
-header{position:sticky;top:0;z-index:40;background:rgba(251,248,243,.94);
- backdrop-filter:blur(12px);border-bottom:1px solid var(--kante)}
-.kopf{display:flex;align-items:center;gap:11px;padding:11px 0 8px}
-.burger{width:44px;height:44px;min-width:44px;border-radius:12px;border:1px solid var(--kante);
- background:var(--karte);cursor:pointer;display:flex;flex-direction:column;align-items:center;
- justify-content:center;gap:4px;transition:.16s}
-.burger:hover{border-color:var(--petrol)} .burger:active{transform:scale(.94)}
-.burger span{display:block;width:18px;height:2px;background:var(--tinte);border-radius:2px}
-.marke{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
-.marke h1{margin:0;font:800 20px/1 Fraunces,Georgia,serif;letter-spacing:-.02em;white-space:nowrap}
-.pille{display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--kante);
- border-radius:99px;padding:5px 11px;font:600 12px Inter;color:var(--tinte2);white-space:nowrap;cursor:pointer}
-.pille.online{background:#E4F1EE;border-color:#B2DACF;color:var(--gruen)}
-.pille.ich{background:var(--petrol);border-color:var(--petrol);color:#fff}
-.balkenbett{height:8px;background:var(--bg2);border:1px solid var(--kante);border-radius:99px;overflow:hidden}
-.balken{height:100%;width:0;border-radius:99px;
- background:linear-gradient(90deg,var(--petrol),var(--gruen) 60%,var(--amber));transition:width .8s cubic-bezier(.2,.9,.2,1)}
-.zahlzeile{display:flex;justify-content:space-between;font:600 12px Inter;color:var(--tinte3);margin-top:6px}
-.suchbox{position:relative;margin:9px 0 4px}
-#suchfeld{width:100%;padding:13px 14px 13px 42px;border:1px solid var(--kante);border-radius:12px;
- font-size:16px;background:var(--karte);font-family:inherit;transition:.18s}
-#suchfeld:focus{outline:none;border-color:var(--petrol);box-shadow:0 0 0 4px rgba(11,59,69,.10)}
-.lupe{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--tinte3);pointer-events:none}
-#ladeinfo{font-size:12px;color:var(--tinte3);margin:5px 0 9px;min-height:15px}
-.aktivfilter{display:flex;gap:7px;flex-wrap:wrap;padding:0 0 11px}
-.chip{display:inline-flex;align-items:center;gap:6px;background:var(--petrol);color:#fff;
- border-radius:99px;padding:5px 8px 5px 12px;font:600 13px Inter}
-.chip b{font-weight:800}
-.chipx{width:19px;height:19px;border-radius:50%;border:0;background:rgba(255,255,255,.24);
- color:#fff;font-size:12px;cursor:pointer;line-height:1}
+/* ---------- Kopfleiste ---------- */
+header{position:sticky;top:0;z-index:40;background:rgba(20,18,15,.93);
+ backdrop-filter:blur(14px);border-bottom:1px solid var(--linie)}
+.kopf{display:flex;align-items:center;gap:12px;padding:10px 0}
+.burger{width:38px;height:38px;min-width:38px;border-radius:3px;border:1px solid var(--linie);
+ background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:4px;transition:.15s}
+.burger:hover{border-color:var(--maxaa)}
+.burger span{width:15px;height:1.5px;background:var(--schrift2);border-radius:1px}
+.burger:hover span{background:var(--maxaa)}
+.kopfmarke{font:400 21px "Instrument Serif",Georgia,serif;flex:1;white-space:nowrap}
+.kopfmarke em{font-style:italic;color:var(--maxaa)}
+.mono{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.09em;color:var(--schrift3);white-space:nowrap}
+.mono b{color:var(--schrift);font-weight:600}
+.sitzung{border:1px solid var(--linie);border-radius:3px;padding:4px 9px}
+.ichchip{border:1px solid var(--linie);border-radius:3px;padding:4px 9px;cursor:pointer;
+ color:var(--schrift2);background:transparent;font:500 11px "IBM Plex Mono",monospace}
+.ichchip:hover{border-color:var(--maxaa);color:var(--maxaa)}
+.spur{height:2px;background:var(--linie);position:relative;overflow:hidden}
+.spur i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--maxaa),var(--maay));
+ width:0;transition:width .9s cubic-bezier(.2,.9,.2,1)}
+.suchreihe{display:flex;gap:9px;padding:11px 0 5px}
+#suchfeld{flex:1;padding:10px 13px;border:1px solid var(--linie);border-radius:3px;
+ font:500 14px "IBM Plex Mono",monospace;background:var(--pult);color:var(--schrift);transition:.16s}
+#suchfeld:focus{outline:none;border-color:var(--maxaa);box-shadow:0 0 0 3px rgba(79,178,134,.14)}
+#suchfeld::placeholder{color:var(--schrift3)}
+#ladeinfo{font:500 11px "IBM Plex Mono",monospace;color:var(--schrift3);min-height:15px;padding-bottom:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:10px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--maxaa);
+ color:var(--maxaa);border-radius:3px;padding:4px 6px 4px 10px;
+ font:500 11px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase}
+.chipx{width:16px;height:16px;border:0;background:transparent;color:inherit;font-size:13px;
+ cursor:pointer;line-height:1;padding:0}
 
 /* ---------- Karte ---------- */
-#karte{background:var(--karte);border:1px solid var(--kante);border-radius:20px;padding:22px;
- box-shadow:var(--sch1);animation:rein .34s cubic-bezier(.2,.9,.2,1)}
-#karte.gut{animation:blitzGut .7s ease}
-.kopfzeile{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.zaehler{font:700 11px Inter;color:var(--tinte3);letter-spacing:.09em}
+#karte{border:1px solid var(--linie);background:var(--pult);border-radius:4px;
+ animation:hoch .3s cubic-bezier(.2,.9,.2,1)}
+#karte.quittiert{animation:quittung .8s ease}
+.kartekopf{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;
+ padding:11px 16px;border-bottom:1px solid var(--linie);background:var(--grund)}
+.pos{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--schrift3)}
+.pos b{color:var(--schrift)}
 .marken{display:flex;gap:6px;flex-wrap:wrap}
-.warn{background:#FCE7DE;color:var(--koralle2);font:800 10px Inter;padding:5px 11px;border-radius:99px;letter-spacing:.08em;text-transform:uppercase}
-.wer{background:var(--bg2);color:var(--tinte2);font:600 11px Inter;padding:5px 11px;border-radius:99px}
-.erledigt{font:800 10px Inter;padding:5px 11px;border-radius:99px;letter-spacing:.06em;text-transform:uppercase}
-.erledigt.ok{background:var(--gruenF);color:var(--gruen)}
-.erledigt.falsch{background:#FBE9E8;color:var(--rot)}
-.erledigt.unklar{background:var(--amberF);color:var(--amber)}
-.dezeile{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;
- border-bottom:1px solid var(--bg2);padding-bottom:16px}
-.de{font:800 29px/1.14 Fraunces,Georgia,serif;letter-spacing:-.018em;word-break:break-word}
-.fehlt{font:italic 600 16px Inter;color:var(--amber)}
-.pl{font-size:14px;color:var(--tinte3);margin-top:4px}
-.enzeile{display:flex;align-items:center;gap:8px;margin-top:10px;background:var(--bg2);
- border:1px solid var(--kante);border-radius:10px;padding:8px 11px}
-.enflag{font:800 10px Inter;letter-spacing:.1em;color:var(--tinte3);background:var(--karte);
- border:1px solid var(--kante);border-radius:6px;padding:3px 7px;flex:0 0 auto}
-.entext{font-size:15px;color:var(--tinte2);word-break:break-word}
-.rund{width:56px;height:56px;min-width:56px;border-radius:50%;border:0;
- background:var(--petrol);color:#fff;font-size:23px;cursor:pointer;
- box-shadow:0 4px 15px rgba(11,59,69,.3);transition:.16s;display:flex;align-items:center;justify-content:center}
-.rund:hover{background:var(--petrol2);transform:translateY(-2px)} .rund:active{transform:scale(.93)}
-.notiz{margin-top:15px;background:var(--amberF);border-left:4px solid var(--amber);padding:11px 15px;
- font-size:14px;color:#6A4300;border-radius:0 11px 11px 0}
-.block{margin-top:17px;padding:15px;border-radius:15px;border:1px solid transparent}
-.block.gruen{background:var(--gruenF);border-color:#CDE2D6}
-.block.amber{background:var(--amberF);border-color:#EEDAB6}
-.blabel{display:flex;align-items:center;gap:8px;font:800 11px Inter;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.punkt{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
-.gruen .blabel{color:var(--gruen)} .gruen .punkt{background:var(--gruen)}
-.amber .blabel{color:var(--amber)} .amber .punkt{background:var(--amber)}
-.hataudio{margin-left:auto;font:700 10px Inter;background:var(--karte);border:1px solid var(--kante);
- border-radius:99px;padding:3px 9px;letter-spacing:.04em}
-.feld{width:100%;padding:14px;border:1px solid var(--kante);border-radius:12px;font-size:16px;
- background:var(--karte);font-family:inherit;color:var(--tinte);transition:.18s}
-.feld:focus{outline:none;border-color:var(--petrol);box-shadow:0 0 0 4px rgba(11,59,69,.10)}
-.feld.gross{font-size:20px;font-weight:600}
-textarea.feld{resize:vertical;line-height:1.5}
-.anmerkung{margin-top:15px}
-.audio{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.audio button{padding:12px 15px;border:1px solid var(--kante);background:var(--karte);border-radius:11px;
- font:600 14px Inter;cursor:pointer;min-height:47px;color:var(--tinte2);transition:.16s;
- display:inline-flex;align-items:center;gap:6px}
-.audio button:hover{border-color:var(--tinte3)} .audio button:active{transform:scale(.96)}
-.audio button.gruen{background:var(--gruen);color:#fff;border-color:var(--gruen);box-shadow:0 3px 13px rgba(44,106,76,.28)}
-.audio button.amber{background:var(--amber);color:#fff;border-color:var(--amber);box-shadow:0 3px 13px rgba(176,112,10,.28)}
-.audio button.loesch{color:var(--rot);border-color:#EBC8C5;background:transparent}
-.audio button.rot{background:var(--rot);color:#fff;border-color:var(--rot);animation:puls 1.6s infinite}
-.pulsi{color:var(--rot);font:600 14px Inter;align-self:center;animation:blink 1.1s infinite}
-.urteile{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:19px}
-.urteile button{padding:15px 0;border:1px solid var(--kante);background:var(--karte);border-radius:13px;
- font:700 14px Inter;cursor:pointer;color:var(--tinte2);transition:.16s}
-.urteile button:hover{border-color:var(--tinte3);transform:translateY(-1px)}
-.urteile button:active{transform:scale(.96)}
-.urteile button.aktiv.ok{background:var(--gruen);color:#fff;border-color:var(--gruen);box-shadow:0 4px 15px rgba(44,106,76,.3)}
-.urteile button.aktiv.falsch{background:var(--rot);color:#fff;border-color:var(--rot);box-shadow:0 4px 15px rgba(174,37,29,.3)}
-.urteile button.aktiv.unklar{background:var(--amber);color:#fff;border-color:var(--amber);box-shadow:0 4px 15px rgba(176,112,10,.3)}
-.blaettern{display:flex;gap:11px;margin-top:15px}
-.blaettern button{flex:1;padding:17px 0;border-radius:14px;font:700 16px Inter;cursor:pointer;
- border:1px solid var(--kante);background:var(--karte);color:var(--tinte2);transition:.16s}
-.blaettern button:hover:not(:disabled){border-color:var(--tinte3)}
-.blaettern button:active:not(:disabled){transform:scale(.98)}
-.blaettern button.haupt{background:var(--koralle);color:#fff;border-color:var(--koralle);box-shadow:0 4px 17px rgba(226,84,43,.3)}
-.blaettern button.haupt:hover:not(:disabled){background:var(--koralle2)}
-.blaettern button:disabled{opacity:.34;cursor:default}
-.leer{text-align:center;color:var(--tinte3);padding:58px 0}
-#fehler{display:none;margin:14px 0;background:#FCEAE8;border:1px solid #F2C4C0;border-left:4px solid var(--rot);
- border-radius:0 12px 12px 0;padding:14px 17px;font-size:14px;color:#711B15}
-#statistik{display:none;margin:14px 0;background:var(--karte);border:1px solid var(--kante);
- border-radius:18px;padding:20px;box-shadow:var(--sch1);animation:rein .3s ease}
-#statistik h3{margin:0 0 14px;font:800 18px Fraunces,Georgia,serif}
-.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:11px;margin-bottom:18px}
-.statkachel{background:var(--bg);border:1px solid var(--kante);border-radius:13px;padding:13px}
-.statkachel .z{font:800 25px/1 Fraunces,Georgia,serif;color:var(--petrol)}
-.statkachel .l{font:600 11px Inter;color:var(--tinte3);letter-spacing:.05em;text-transform:uppercase;margin-top:5px}
-.rangliste{display:flex;flex-direction:column;gap:8px}
-.rang{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--bg);border:1px solid var(--kante);border-radius:12px}
-.rang .pos{font:800 15px Fraunces,Georgia,serif;color:var(--tinte3);min-width:22px}
-.rang .nm{flex:1;font-weight:600} .rang .ct{font:800 16px Inter;color:var(--gruen)}
-.rang.ich{border-color:var(--petrol);background:#EFF5F6}
-footer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(251,248,243,.96);
- backdrop-filter:blur(12px);border-top:1px solid var(--kante);padding:11px 0 max(11px,env(safe-area-inset-bottom))}
+.mk{font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;
+ padding:3px 8px;border-radius:2px;border:1px solid}
+.mk.warn{color:var(--maay);border-color:rgba(224,164,88,.4);background:rgba(224,164,88,.09)}
+.mk.ok{color:var(--maxaa);border-color:rgba(79,178,134,.4);background:rgba(79,178,134,.09)}
+.mk.falsch{color:var(--rec);border-color:rgba(214,73,51,.4);background:rgba(214,73,51,.09)}
+.mk.unklar{color:var(--maay);border-color:rgba(224,164,88,.4);background:rgba(224,164,88,.09)}
+.mk.wer{color:var(--schrift3);border-color:var(--linie)}
+
+/* Deutsch = die Quelle. Helles Blatt auf dunklem Pult. */
+.quelle{margin:16px;background:var(--papier);color:var(--tinte);border-radius:3px;
+ padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.5),0 18px 44px rgba(0,0,0,.36)}
+.quellekopf{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.wort{font:400 40px/1.05 "Instrument Serif",Georgia,serif;letter-spacing:-.005em;word-break:break-word}
+.wort.klein{font-size:27px;line-height:1.2}
+.plural{font:500 12px "IBM Plex Mono",monospace;color:#6B6357;margin-top:7px;letter-spacing:.03em}
+.fehlt{font:italic 400 22px "Instrument Serif",Georgia,serif;color:#9A7B3A}
+.hoerknopf{width:52px;height:52px;min-width:52px;border-radius:50%;border:0;background:var(--tinte);
+ color:var(--papier);font-size:19px;cursor:pointer;transition:.16s;display:flex;
+ align-items:center;justify-content:center}
+.hoerknopf:hover{transform:scale(1.06)} .hoerknopf:active{transform:scale(.94)}
+.hoerknopf.klein{width:36px;height:36px;min-width:36px;font-size:14px}
+.enreihe{display:flex;align-items:center;gap:11px;margin-top:17px;padding-top:15px;
+ border-top:1px solid rgba(20,18,15,.13)}
+.enmark{font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.17em;color:#8A8172;flex:0 0 auto}
+.entext{flex:1;font:400 16px "IBM Plex Sans",sans-serif;color:#3E382E;word-break:break-word}
+.tempo{display:flex;gap:5px;margin-top:14px}
+.tempo button{border:1px solid rgba(20,18,15,.16);background:transparent;color:#6B6357;
+ border-radius:2px;padding:4px 9px;font:500 10px "IBM Plex Mono",monospace;cursor:pointer;letter-spacing:.06em}
+.tempo button.aktiv{background:var(--tinte);color:var(--papier);border-color:var(--tinte)}
+.notiz{margin:0 16px 16px;border-left:2px solid var(--maay);background:rgba(224,164,88,.07);
+ padding:10px 14px;font:400 13px/1.5 "IBM Plex Sans";color:var(--maay)}
+
+/* ---------- Kanalzug ---------- */
+.kanal{margin:0 16px 14px;border:1px solid var(--linie);border-left:3px solid;border-radius:3px;
+ background:var(--grund);overflow:hidden}
+.kanal.k1{border-left-color:var(--maxaa)}
+.kanal.k2{border-left-color:var(--maay)}
+.kanalkopf{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--pult2);
+ border-bottom:1px solid var(--linie)}
+.kanalname{font:600 10.5px "IBM Plex Mono",monospace;letter-spacing:.17em;text-transform:uppercase}
+.k1 .kanalname{color:var(--maxaa)} .k2 .kanalname{color:var(--maay)}
+.kanalort{font:500 10px "IBM Plex Mono",monospace;color:var(--schrift3);letter-spacing:.1em}
+.led{width:7px;height:7px;border-radius:50%;background:var(--linie);margin-left:auto;flex:0 0 7px}
+.led.an{box-shadow:0 0 7px currentColor}
+.k1 .led.an{background:var(--maxaa);color:var(--maxaa)}
+.k2 .led.an{background:var(--maay);color:var(--maay)}
+.kanalkoerper{padding:13px}
+.kfeld{width:100%;padding:12px 13px;border:1px solid var(--linie);border-radius:3px;
+ background:var(--pult);color:var(--schrift);font:500 18px "IBM Plex Mono",monospace;transition:.16s}
+.kfeld:focus{outline:none;background:var(--pult2)}
+.k1 .kfeld:focus{border-color:var(--maxaa);box-shadow:0 0 0 3px rgba(79,178,134,.13)}
+.k2 .kfeld:focus{border-color:var(--maay);box-shadow:0 0 0 3px rgba(224,164,88,.13)}
+.kfeld::placeholder{color:var(--schrift3);font-weight:400}
+textarea.kfeld{resize:vertical;line-height:1.55;font-size:15px}
+
+/* Signatur: die Wellenform */
+.welle{height:0;margin-top:0;border-radius:2px;background:#0E0D0B;border:1px solid transparent;
+ overflow:hidden;transition:height .25s ease,margin-top .25s ease}
+.welle.an{height:56px;margin-top:11px;border-color:var(--linie)}
+.welle canvas{display:block;width:100%;height:100%}
+
+.knoepfe{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.knoepfe button{padding:9px 13px;border:1px solid var(--linie);background:transparent;
+ color:var(--schrift2);border-radius:3px;cursor:pointer;min-height:40px;
+ font:500 12px "IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;
+ transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.knoepfe button:hover{border-color:var(--schrift2);color:var(--schrift)}
+.knoepfe button:active{transform:translateY(1px)}
+.k1 .knoepfe button.haupt{background:var(--maxaa);border-color:var(--maxaa);color:#0C1B14}
+.k2 .knoepfe button.haupt{background:var(--maay);border-color:var(--maay);color:#1E1608}
+.knoepfe button.aufnahme{background:var(--rec);border-color:var(--rec);color:#fff}
+.knoepfe button.aufnahme .dot{width:8px;height:8px;border-radius:50%;background:#fff;
+ animation:recpuls 1.05s infinite}
+.knoepfe button.weg{color:var(--rec);border-color:rgba(214,73,51,.32)}
+.pegelbett{flex:1;min-width:64px;height:3px;background:var(--linie);border-radius:2px;
+ align-self:center;overflow:hidden}
+.pegel{height:100%;width:0;background:var(--rec);transition:width .07s linear}
+
+/* ---------- Urteil ---------- */
+.urteil{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px 16px}
+.urteil button{padding:14px 0 11px;border:1px solid var(--linie);background:transparent;
+ color:var(--schrift2);border-radius:3px;cursor:pointer;transition:.15s;
+ font:600 12px "IBM Plex Mono",monospace;letter-spacing:.11em;text-transform:uppercase}
+.urteil button:hover{border-color:var(--schrift2);color:var(--schrift)}
+.urteil button:active{transform:translateY(1px)}
+.urteil button .taste{display:block;font-size:9px;color:var(--schrift3);margin-top:4px;letter-spacing:.15em}
+.urteil button.aktiv.u1{background:var(--maxaa);border-color:var(--maxaa);color:#0C1B14}
+.urteil button.aktiv.u2{background:var(--rec);border-color:var(--rec);color:#fff}
+.urteil button.aktiv.u3{background:var(--maay);border-color:var(--maay);color:#1E1608}
+.urteil button.aktiv .taste{color:rgba(0,0,0,.42)}
+.blaettern{display:flex;gap:9px;margin-top:14px}
+.blaettern button{flex:1;padding:14px 0;border:1px solid var(--linie);background:transparent;
+ color:var(--schrift2);border-radius:3px;cursor:pointer;transition:.15s;
+ font:600 12px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
+.blaettern button:hover:not(:disabled){border-color:var(--maxaa);color:var(--maxaa)}
+.blaettern button:disabled{opacity:.28;cursor:default}
+.leer{text-align:center;color:var(--schrift3);padding:64px 20px;
+ font:500 13px "IBM Plex Mono",monospace;letter-spacing:.08em}
+#fehler{display:none;margin:14px 0;border:1px solid rgba(214,73,51,.34);border-left:3px solid var(--rec);
+ background:rgba(214,73,51,.07);border-radius:3px;padding:13px 16px;font-size:14px;color:#EFA294}
+#statistik{display:none;margin:14px 0;border:1px solid var(--linie);background:var(--pult);
+ border-radius:4px;padding:18px;animation:hoch .28s ease}
+#statistik h3{margin:0 0 15px;font:400 22px "Instrument Serif",Georgia,serif}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(94px,1fr));gap:1px;
+ background:var(--linie);border:1px solid var(--linie);border-radius:3px;margin-bottom:16px;overflow:hidden}
+.kachel{background:var(--grund);padding:13px}
+.kachel .z{font:400 27px/1 "Instrument Serif",Georgia,serif;color:var(--maxaa)}
+.kachel .l{font:500 9.5px "IBM Plex Mono",monospace;letter-spacing:.13em;text-transform:uppercase;
+ color:var(--schrift3);margin-top:6px}
+.rangliste{display:flex;flex-direction:column;gap:1px;background:var(--linie);
+ border:1px solid var(--linie);border-radius:3px;overflow:hidden}
+.rang{display:flex;align-items:center;gap:12px;padding:11px 13px;background:var(--grund)}
+.rang .n{font:500 11px "IBM Plex Mono",monospace;color:var(--schrift3);min-width:20px}
+.rang .nm{flex:1;font-weight:500;font-size:14px}
+.rang .ct{font:500 14px "IBM Plex Mono",monospace;color:var(--maxaa)}
+.rang.ich{background:var(--pult2)} .rang.ich .nm{color:var(--maxaa)}
+footer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(20,18,15,.95);
+ backdrop-filter:blur(14px);border-top:1px solid var(--linie);
+ padding:9px 0 max(9px,env(safe-area-inset-bottom))}
 .fbtn{display:flex;gap:8px}
-.fbtn button{flex:1;padding:13px 8px;border-radius:12px;font:700 14px Inter;cursor:pointer;
- border:1px solid var(--kante);background:var(--karte);color:var(--tinte2);transition:.16s}
-.fbtn button:hover{border-color:var(--tinte3)} .fbtn button:active{transform:scale(.97)}
-.fbtn button.haupt{background:var(--petrol);color:#fff;border-color:var(--petrol);box-shadow:0 3px 13px rgba(11,59,69,.28)}
-.hinw{text-align:center;font-size:12px;color:var(--tinte3);margin:8px 0 0}
+.fbtn button{flex:1;padding:11px 6px;border:1px solid var(--linie);background:transparent;
+ color:var(--schrift2);border-radius:3px;cursor:pointer;transition:.15s;
+ font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase}
+.fbtn button:hover{border-color:var(--maxaa);color:var(--maxaa)}
+.fbtn button.haupt{background:var(--maxaa);border-color:var(--maxaa);color:#0C1B14}
+.tastenhilfe{text-align:center;font:500 9.5px "IBM Plex Mono",monospace;color:var(--schrift3);
+ letter-spacing:.11em;margin:8px 0 0}
+@media(max-width:520px){ .wort{font-size:32px} .tastenhilfe{display:none} }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+:focus-visible{outline:2px solid var(--maxaa);outline-offset:2px}
 </style>
 </head>
 <body>
 
 <div id="tor">
   <div class="torkarte">
-    <div class="logo">
-      <svg width="34" height="34" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="M3 22h6M23 22h6" stroke="#E2542B" stroke-width="3" stroke-linecap="round"/>
-        <path d="M9 22c0-5 3.2-8 7-8s7 3 7 8" stroke="#0B3B45" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="16" cy="10" r="2.6" fill="#B0700A"/>
+    <div class="torlogo">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M3 22h6M23 22h6" stroke="#E0A458" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M9 22c0-5 3.2-8 7-8s7 3 7 8" stroke="#4FB286" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="16" cy="10" r="2.4" fill="#D64933"/>
       </svg>
-      <h1>Lingo Check</h1>
+      <span class="wortmarke">Lingo <em>Check</em></span>
     </div>
-    <p class="unter">Somali prüfen, verbessern, aufnehmen</p>
-    <label for="namefeld">Dein Name</label>
-    <input id="namefeld" placeholder="z. B. Yusuf" autocomplete="name" onkeydown="if(event.key==='Enter')anmelden()">
-    <button class="torbtn" onclick="anmelden()">Loslegen</button>
-    <p class="torhinweis">Der Name zeigt nur an, wer welchen Eintrag geprüft hat.<br>Kein Passwort, keine E-Mail.</p>
+    <p class="unter">Somali · Prüfen · Aufnehmen</p>
+    <label for="namefeld">Name</label>
+    <input id="namefeld" placeholder="Yusuf" autocomplete="name" onkeydown="if(event.key==='Enter')anmelden()">
+    <button class="torbtn" onclick="anmelden()">Pult öffnen</button>
+    <p class="torhinweis">Der Name zeigt an, wer welchen Eintrag geprüft hat.<br>Kein Passwort, keine E-Mail.</p>
   </div>
 </div>
 
@@ -240,30 +300,18 @@ footer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(251,248
   <div class="mitte">
     <div class="kopf">
       <button class="burger" onclick="menueAuf()" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
-      <div class="marke">
-        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path d="M3 22h6M23 22h6" stroke="#E2542B" stroke-width="3" stroke-linecap="round"/>
-          <path d="M9 22c0-5 3.2-8 7-8s7 3 7 8" stroke="#0B3B45" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="16" cy="10" r="2.6" fill="#B0700A"/>
-        </svg>
-        <h1>Lingo Check</h1>
-      </div>
-      <span class="pille" id="sync">…</span>
-      <span class="pille ich" id="ichPille" onclick="abmelden()">…</span>
+      <span class="kopfmarke">Lingo <em>Check</em></span>
+      <span class="mono sitzung">Heute <b id="heute">0</b></span>
+      <button class="ichchip" id="ichPille" onclick="abmelden()">—</button>
     </div>
-    <div class="balkenbett"><div class="balken" id="balken"></div></div>
-    <div class="zahlzeile">
-      <span id="fortschritt">0 / 0</span>
-      <span>🎙 <span id="mitAudio">0</span> Aufnahmen</span>
-    </div>
-    <div class="suchbox">
-      <svg class="lupe" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
-      </svg>
-      <input id="suchfeld" placeholder="Suchen …" oninput="suchen(this.value)">
+  </div>
+  <div class="spur"><i id="balken"></i></div>
+  <div class="mitte">
+    <div class="suchreihe">
+      <input id="suchfeld" placeholder="suchen …" oninput="suchen(this.value)">
     </div>
     <p id="ladeinfo"></p>
-    <div class="aktivfilter" id="aktivfilter"></div>
+    <div class="chips" id="chips"></div>
   </div>
 </header>
 
@@ -273,57 +321,48 @@ footer{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(251,248
 </div>
 
 <main class="mitte">
-  <div id="karte"><p class="leer">Wird geladen …</p></div>
+  <div id="karte"><p class="leer">wird geladen …</p></div>
   <div class="blaettern">
-    <button id="zurueck" onclick="blaettern(-1)">← Zurück</button>
-    <button id="weiter" class="haupt" onclick="blaettern(1)">Weiter →</button>
+    <button id="zurueck" onclick="blaettern(-1)">← zurück</button>
+    <button id="weiter" onclick="blaettern(1)">weiter →</button>
   </div>
+  <p class="tastenhilfe">← → blättern · 1 2 3 urteilen · leertaste deutsch · R aufnehmen</p>
 </main>
 
 <footer>
   <div class="mitte">
     <div class="fbtn">
       <button class="haupt" onclick="menueAuf()">☰ Menü</button>
-      <button onclick="zeigeStatistik()">📊 Statistik</button>
-      <button onclick="exportJSON()">⤓ Sichern</button>
+      <button onclick="zeigeStatistik()">Statistik</button>
+      <button onclick="exportJSON()">Sichern</button>
     </div>
-    <p class="hinw">Speichert automatisch</p>
   </div>
 </footer>
 
 <script>
-const CONFIG = { SUPABASE_URL:"", SUPABASE_KEY:"", TEAM_CODE:"lingo-check-2026" };
-
-let DB=null, DATEN=[], korr={}, VERZ=null;
-let kat='behoerde', status='alle', idx=0, suche='';
-let ICH='', ONLINE=false, geladen=new Set();
-let lokaleAudios=new Set(), zentraleAudios=new Map();
+const CONFIG={SUPABASE_URL:"",SUPABASE_KEY:"",TEAM_CODE:"lingo-check-2026"};
+let DB=null,DATEN=[],korr={},VERZ=null;
+let kat='behoerde',status='alle',idx=0,suche='';
+let ICH='',ONLINE=false,geladen=new Set();
+let lokaleAudios=new Set(),zentraleAudios=new Map();
+let tempo=0.85, heute=0;
+let aktuell=null;
 const rec={};
-try{ ICH = localStorage.getItem('lc_name')||''; }catch(e){}
+try{ICH=localStorage.getItem('lc_name')||'';heute=+(sessionStorage.getItem('lc_heute')||0);}catch(e){}
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-function zeigeFehler(t){ const el=$('fehler'); if(el){ el.style.display='block'; el.innerHTML=t; } console.error(t); }
-function zeigeSync(t,d){ const el=$('sync'); if(!el)return; el.textContent=t;
-  setTimeout(()=>{ if(el.textContent===t){ el.textContent=ONLINE?'☁':'○'; el.classList.toggle('online',ONLINE);} }, d||2400); }
+function zeigeFehler(t){const el=$('fehler');if(el){el.style.display='block';el.innerHTML=t;}console.error(t);}
 
 /* ---------- Menü ---------- */
-function menueAuf(){ $('menue').classList.add('auf'); $('schleier').classList.add('auf');
-  document.body.classList.add('offen'); baueMenue(); }
-function menueZu(){ $('menue').classList.remove('auf'); $('schleier').classList.remove('auf');
-  document.body.classList.remove('offen'); }
+function menueAuf(){$('menue').classList.add('auf');$('schleier').classList.add('auf');
+  document.body.classList.add('gesperrt');baueMenue();}
+function menueZu(){$('menue').classList.remove('auf');$('schleier').classList.remove('auf');
+  document.body.classList.remove('gesperrt');}
 
-const STATUS=[
- ['alle','Alles anzeigen'],
- ['offen','Noch ungeprüft'],
- ['fertig','Schon geprüft — nachbessern'],
- ['ok','Nur ✓ richtig'],
- ['falsch','Nur ✗ falsch'],
- ['unklar','Nur ? unklar'],
- ['mitaudio','Mit Aufnahme — anhören'],
- ['ohneaudio','Ohne Aufnahme'],
- ['ymmfehlt','Af-Maay fehlt noch']
-];
+const STATUS=[['alle','Alles'],['offen','Noch ungeprüft'],['fertig','Schon geprüft — nachbessern'],
+ ['ok','Nur richtig'],['falsch','Nur falsch'],['unklar','Nur unklar'],
+ ['mitaudio','Mit Aufnahme — anhören'],['ohneaudio','Ohne Aufnahme'],['ymmfehlt','Af-Maay fehlt']];
 const NAMEN={behoerde:'Behörde',nordsued:'Nord/Süd',begruessung:'Begrüßung',zahlen:'Zahlen',
  zahlen_alle:'Zahlen 0–100.000',alphabet:'Alphabet',zeit:'Zeit',gesundheit:'Gesundheit',
  familie:'Familie',weg:'Weg',arbeit:'Arbeit',thema_tiere:'Tiere',thema_essen:'Essen',
@@ -342,286 +381,387 @@ const ORD=['behoerde','nordsued','begruessung','alphabet','zahlen','zahlen_alle'
  'artikelwoerter','interjektionen','suffixe','eigennamen','buchstaben','sonstige'];
 
 function baueMenue(){
-  const z={}; DATEN.forEach(d=>z[d.k]=(z[d.k]||0)+1);
-  let h='<div class="mgruppe"><p class="mtitel">Was anzeigen</p>';
-  STATUS.forEach(s=>{ h+='<button class="meintrag'+(status===s[0]?' aktiv':'')+'" onclick="setStatus(\''+s[0]+'\')">'+
-    '<span>'+s[1]+'</span><span class="anz">'+zaehleStatus(s[0]).toLocaleString('de')+'</span></button>'; });
-  h+='</div><div class="mtrenner"></div><div class="mgruppe"><p class="mtitel">Bereiche</p>'+
-     '<button class="meintrag'+(kat==='alle'?' aktiv':'')+'" onclick="setKat(\'alle\')">'+
+  const z={};DATEN.forEach(d=>z[d.k]=(z[d.k]||0)+1);
+  let h='<p class="mtitel">Was anzeigen</p>';
+  STATUS.forEach(s=>{h+='<button class="meintrag'+(status===s[0]?' aktiv':'')+'" onclick="setStatus(\''+s[0]+'\')">'+
+    '<span>'+s[1]+'</span><span class="anz">'+zaehleStatus(s[0]).toLocaleString('de')+'</span></button>';});
+  h+='<p class="mtitel">Bereiche</p><button class="meintrag'+(kat==='alle'?' aktiv':'')+'" onclick="setKat(\'alle\')">'+
      '<span>Alle Bereiche</span><span class="anz">'+DATEN.length.toLocaleString('de')+'</span></button>';
-  ORD.filter(x=>z[x]).forEach(x=>{ h+='<button class="meintrag'+(kat===x?' aktiv':'')+'" onclick="setKat(\''+x+'\')">'+
-    '<span>'+(NAMEN[x]||x)+'</span><span class="anz">'+z[x].toLocaleString('de')+'</span></button>'; });
-  h+='</div><div class="mtrenner"></div><div class="mgruppe"><p class="mtitel">Werkzeuge</p>'+
-     '<button class="meintrag" onclick="menueZu();zeigeStatistik()"><span>📊 Statistik &amp; Rangliste</span></button>'+
-     '<button class="meintrag" onclick="exportJSON()"><span>⤓ Arbeit sichern</span></button>'+
-     '<button class="meintrag" onclick="document.getElementById(\'ladefeld\').click()"><span>⤒ Datei laden</span></button>'+
-     '<button class="meintrag" onclick="alleAudios()"><span>🎙 Alle Aufnahmen laden</span></button>'+
-     '<button class="meintrag" onclick="abmelden()"><span>👤 Abmelden</span></button>'+
-     '<input type="file" id="ladefeld" accept=".json" onchange="importJSON(event)" style="display:none">'+
-     '</div>';
+  ORD.filter(x=>z[x]).forEach(x=>{h+='<button class="meintrag'+(kat===x?' aktiv':'')+'" onclick="setKat(\''+x+'\')">'+
+    '<span>'+(NAMEN[x]||x)+'</span><span class="anz">'+z[x].toLocaleString('de')+'</span></button>';});
+  h+='<p class="mtitel">Werkzeuge</p>'+
+     '<button class="meintrag" onclick="menueZu();zeigeStatistik()"><span>Statistik &amp; Rangliste</span></button>'+
+     '<button class="meintrag" onclick="exportJSON()"><span>Arbeit sichern</span></button>'+
+     '<button class="meintrag" onclick="document.getElementById(\'ladefeld\').click()"><span>Datei laden</span></button>'+
+     '<button class="meintrag" onclick="alleAudios()"><span>Alle Aufnahmen laden</span></button>'+
+     '<button class="meintrag" onclick="abmelden()"><span>Abmelden</span></button>'+
+     '<input type="file" id="ladefeld" accept=".json" onchange="importJSON(event)" style="display:none">';
   $('menueinhalt').innerHTML=h;
 }
-function zaehleStatus(s){
-  if(s==='alle')return DATEN.length;
-  return DATEN.filter(d=>passt(d,s)).length;
-}
+const zaehleStatus=s=>s==='alle'?DATEN.length:DATEN.filter(d=>passt(d,s)).length;
 function passt(d,s){
   const p=korr[d.i]||{};
-  const kS='audio:'+d.i+':so', kY='audio:'+d.i+':ymm';
-  const hatA=lokaleAudios.has(kS)||lokaleAudios.has(kY)||zentraleAudios.has(kS)||zentraleAudios.has(kY);
-  switch(s){
-    case 'offen': return !p.urteil;
-    case 'fertig': return !!p.urteil;
-    case 'ok': return p.urteil==='ok';
-    case 'falsch': return p.urteil==='falsch';
-    case 'unklar': return p.urteil==='unklar';
-    case 'mitaudio': return hatA;
-    case 'ohneaudio': return !hatA;
-    case 'ymmfehlt': return !(p.ymm!==undefined?p.ymm:d.ymm);
-    default: return true;
-  }
+  const a=lokaleAudios.has('audio:'+d.i+':so')||lokaleAudios.has('audio:'+d.i+':ymm')||
+          zentraleAudios.has('audio:'+d.i+':so')||zentraleAudios.has('audio:'+d.i+':ymm');
+  if(s==='offen')return !p.urteil;
+  if(s==='fertig')return !!p.urteil;
+  if(s==='ok'||s==='falsch'||s==='unklar')return p.urteil===s;
+  if(s==='mitaudio')return a;
+  if(s==='ohneaudio')return !a;
+  if(s==='ymmfehlt')return !(p.ymm!==undefined?p.ymm:d.ymm);
+  return true;
 }
-function setStatus(s){ status=s; idx=0; menueZu(); zeichne(); }
-function setKat(k){ kat=k; idx=0; menueZu(); positionMerken(); zeichne(); }
+function setStatus(s){status=s;idx=0;menueZu();zeichne();}
+function setKat(k){kat=k;idx=0;menueZu();positionMerken();zeichne();}
 
-/* ---------- IndexedDB ---------- */
-function oeffneDB(){ return new Promise(res=>{ let f=false;
+/* ---------- Speicher ---------- */
+function oeffneDB(){return new Promise(res=>{let f=false;
   const r=indexedDB.open('lingocheck',1);
-  r.onupgradeneeded=e=>{ const db=e.target.result;
+  r.onupgradeneeded=e=>{const db=e.target.result;
     if(!db.objectStoreNames.contains('audio'))db.createObjectStore('audio');
-    if(!db.objectStoreNames.contains('korr'))db.createObjectStore('korr'); };
-  r.onsuccess=e=>{f=true;res(e.target.result);}; r.onerror=()=>{f=true;res(null);};
+    if(!db.objectStoreNames.contains('korr'))db.createObjectStore('korr');};
+  r.onsuccess=e=>{f=true;res(e.target.result);};r.onerror=()=>{f=true;res(null);};
   r.onblocked=()=>zeigeFehler('<b>Bitte andere Tabs dieser Seite schließen.</b>');
-  setTimeout(()=>{ if(!f)res(null); },6000); }); }
-function put(s,k,v){ return new Promise(r=>{ if(!DB)return r();
-  try{const t=DB.transaction(s,'readwrite');t.objectStore(s).put(v,k);t.oncomplete=r;t.onerror=r;}catch(e){r();} }); }
-function hole(s,k){ return new Promise(r=>{ if(!DB)return r(undefined);
-  try{const q=DB.transaction(s,'readonly').objectStore(s).get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(undefined);}catch(e){r(undefined);} }); }
-function entferne(s,k){ return new Promise(r=>{ if(!DB)return r();
-  try{const t=DB.transaction(s,'readwrite');t.objectStore(s).delete(k);t.oncomplete=r;t.onerror=r;}catch(e){r();} }); }
-function alleKeys(s){ return new Promise(r=>{ if(!DB)return r([]);
-  try{const q=DB.transaction(s,'readonly').objectStore(s).getAllKeys();q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);}catch(e){r([]);} }); }
+  setTimeout(()=>{if(!f)res(null);},6000);});}
+function put(s,k,v){return new Promise(r=>{if(!DB)return r();
+  try{const t=DB.transaction(s,'readwrite');t.objectStore(s).put(v,k);t.oncomplete=r;t.onerror=r;}catch(e){r();}});}
+function hole(s,k){return new Promise(r=>{if(!DB)return r(undefined);
+  try{const q=DB.transaction(s,'readonly').objectStore(s).get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(undefined);}catch(e){r(undefined);}});}
+function entferne(s,k){return new Promise(r=>{if(!DB)return r();
+  try{const t=DB.transaction(s,'readwrite');t.objectStore(s).delete(k);t.oncomplete=r;t.onerror=r;}catch(e){r();}});}
+function alleKeys(s){return new Promise(r=>{if(!DB)return r([]);
+  try{const q=DB.transaction(s,'readonly').objectStore(s).getAllKeys();q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);}catch(e){r([]);}});}
 
-/* ---------- Supabase ---------- */
-async function sb(p,o){ o=o||{};
+/* ---------- Server ---------- */
+async function sb(p,o){o=o||{};
   const r=await fetch(CONFIG.SUPABASE_URL+'/rest/v1/'+p,{...o,headers:{apikey:CONFIG.SUPABASE_KEY,
     Authorization:'Bearer '+CONFIG.SUPABASE_KEY,'Content-Type':'application/json',...(o.headers||{})}});
-  if(!r.ok)throw new Error(r.status); const t=await r.text(); return t?JSON.parse(t):null; }
-async function zentralLaden(){ if(!ONLINE)return 0;
-  try{ const rows=await sb('korrekturen?select=*&limit=100000',{headers:{Prefer:'return=representation'}});
-    let n=0;(rows||[]).forEach(r=>{ const l=korr[r.eintrag_id];
+  if(!r.ok)throw new Error(r.status);const t=await r.text();return t?JSON.parse(t):null;}
+async function zentralLaden(){if(!ONLINE)return 0;
+  try{const rows=await sb('korrekturen?select=*&limit=100000',{headers:{Prefer:'return=representation'}});
+    let n=0;(rows||[]).forEach(r=>{const l=korr[r.eintrag_id];
       if(!l||!l._zeit||new Date(r.geaendert_am)>new Date(l._zeit)){
         korr[r.eintrag_id]={de:r.de||undefined,so:r.so||undefined,ymm:r.ymm||undefined,
           urteil:r.urteil||undefined,notiz:r.notiz||undefined,_zeit:r.geaendert_am,_wer:r.bearbeiter};n++;}});
-    await put('korr','alle',korr); return n; }catch(e){ return 0; } }
-async function zentralSpeichern(id){ if(!ONLINE)return; const p=korr[id]||{};
-  try{ await sb('korrekturen',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
+    await put('korr','alle',korr);return n;}catch(e){return 0;}}
+async function zentralSpeichern(id){if(!ONLINE)return;const p=korr[id]||{};
+  try{await sb('korrekturen',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
     body:JSON.stringify([{eintrag_id:id,de:p.de??null,so:p.so??null,ymm:p.ymm??null,urteil:p.urteil??null,
-      notiz:p.notiz??null,bearbeiter:ICH||'unbekannt',team_code:CONFIG.TEAM_CODE}])});
-    zeigeSync('✓'); }catch(e){ zeigeSync('lokal'); } }
-async function positionMerken(){ if(!ONLINE||!ICH)return;
-  try{ await sb('fortschritt',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
-    body:JSON.stringify([{bearbeiter:ICH,kategorie:kat,position:idx,team_code:CONFIG.TEAM_CODE}])});}catch(e){} }
-async function positionHolen(){ if(!ONLINE||!ICH)return null;
-  try{ const r=await sb('fortschritt?bearbeiter=eq.'+encodeURIComponent(ICH)+'&select=*',
-    {headers:{Prefer:'return=representation'}}); return r&&r[0]?r[0]:null; }catch(e){ return null; } }
-async function audioHoch(key,blob){ if(!ONLINE)return null;
+      notiz:p.notiz??null,bearbeiter:ICH||'unbekannt',team_code:CONFIG.TEAM_CODE}])});}catch(e){}}
+async function positionMerken(){if(!ONLINE||!ICH)return;
+  try{await sb('fortschritt',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
+    body:JSON.stringify([{bearbeiter:ICH,kategorie:kat,position:idx,team_code:CONFIG.TEAM_CODE}])});}catch(e){}}
+async function positionHolen(){if(!ONLINE||!ICH)return null;
+  try{const r=await sb('fortschritt?bearbeiter=eq.'+encodeURIComponent(ICH)+'&select=*',
+    {headers:{Prefer:'return=representation'}});return r&&r[0]?r[0]:null;}catch(e){return null;}}
+async function audioHoch(key,blob){if(!ONLINE)return null;
   const pfad=key.replace(/:/g,'_')+'.webm';
-  try{ const r=await fetch(CONFIG.SUPABASE_URL+'/storage/v1/object/aufnahmen/'+pfad,{method:'POST',
+  try{const r=await fetch(CONFIG.SUPABASE_URL+'/storage/v1/object/aufnahmen/'+pfad,{method:'POST',
       headers:{apikey:CONFIG.SUPABASE_KEY,Authorization:'Bearer '+CONFIG.SUPABASE_KEY,
       'Content-Type':'audio/webm','x-upsert':'true'},body:blob});
-    if(!r.ok)throw 0; const t=key.split(':');
+    if(!r.ok)throw 0;const t=key.split(':');
     await sb('aufnahmen',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
       body:JSON.stringify([{eintrag_id:t[1],varietaet:t[2],pfad,sprecher:ICH||'unbekannt',
-        bytes:blob.size,team_code:CONFIG.TEAM_CODE}])}); return pfad; }catch(e){ return null; } }
-async function zentraleAudiosLaden(){ if(!ONLINE)return;
-  try{ const r=await sb('aufnahmen?select=eintrag_id,varietaet,pfad,sprecher',{headers:{Prefer:'return=representation'}});
-    zentraleAudios=new Map((r||[]).map(a=>['audio:'+a.eintrag_id+':'+a.varietaet,a])); }catch(e){} }
-function audioUrl(k){ const a=zentraleAudios.get(k);
-  return a?CONFIG.SUPABASE_URL+'/storage/v1/object/public/aufnahmen/'+a.pfad:null; }
+        bytes:blob.size,team_code:CONFIG.TEAM_CODE}])});return pfad;}catch(e){return null;}}
+async function zentraleAudiosLaden(){if(!ONLINE)return;
+  try{const r=await sb('aufnahmen?select=eintrag_id,varietaet,pfad,sprecher',{headers:{Prefer:'return=representation'}});
+    zentraleAudios=new Map((r||[]).map(a=>['audio:'+a.eintrag_id+':'+a.varietaet,a]));}catch(e){}}
+const audioUrl=k=>{const a=zentraleAudios.get(k);
+  return a?CONFIG.SUPABASE_URL+'/storage/v1/object/public/aufnahmen/'+a.pfad:null;};
 
-/* ---------- Sprache ---------- */
-function sprich(t,lang){ if(!('speechSynthesis' in window))return; speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t); u.lang=lang||'de-DE'; u.rate=.85; speechSynthesis.speak(u); }
+/* ---------- Vorlesen: beste Stimme wählen ---------- */
+let stimmen=[];
+function ladeStimmen(){ if('speechSynthesis' in window)stimmen=speechSynthesis.getVoices()||[]; }
+if('speechSynthesis' in window){ ladeStimmen(); speechSynthesis.onvoiceschanged=ladeStimmen; }
+function besteStimme(lang){
+  const p=lang.slice(0,2);
+  const passend=stimmen.filter(v=>v.lang&&v.lang.toLowerCase().indexOf(p)===0);
+  if(!passend.length)return null;
+  const gut=passend.find(v=>/google|natural|premium|enhanced/i.test(v.name));
+  return gut||passend.find(v=>v.localService)||passend[0];
+}
+function sprich(t,lang){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t);
+  u.lang=lang||'de-DE'; u.rate=tempo;
+  const v=besteStimme(u.lang); if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+function setTempo(t){tempo=t;zeichne();}
+function sprichDe(){
+  if(!aktuell)return;
+  const p=korr[aktuell.i]||{};
+  const w=p.de!==undefined?p.de:(aktuell.de||'');
+  if(w)sprich(w+(aktuell.pl?', '+aktuell.pl:''),'de-DE');
+}
+function sprichEn(){ if(aktuell&&aktuell.en)sprich(aktuell.en,'en-US'); }
 
-const rec2={};
-async function starteAufnahme(key,bid){
-  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true});
-    const mr=new MediaRecorder(st); const ch=[];
-    mr.ondataavailable=e=>{ if(e.data.size)ch.push(e.data); };
-    mr.onstop=async()=>{ st.getTracks().forEach(t=>t.stop());
+/* ---------- Aufnahme mit Wellenform ---------- */
+async function starteAufnahme(key){
+  if(rec[key])return;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const mr=new MediaRecorder(stream); const ch=[];
+    const AC=window.AudioContext||window.webkitAudioContext;
+    let ctx=null,an=null,raf=null;
+    try{
+      ctx=new AC(); const src=ctx.createMediaStreamSource(stream);
+      an=ctx.createAnalyser(); an.fftSize=1024; src.connect(an);
+    }catch(e){}
+    mr.ondataavailable=e=>{if(e.data.size)ch.push(e.data);};
+    mr.onstop=async()=>{
+      if(raf)cancelAnimationFrame(raf);
+      if(ctx)try{ctx.close();}catch(e){}
+      stream.getTracks().forEach(t=>t.stop());
       const b=new Blob(ch,{type:mr.mimeType||'audio/webm'});
       await put('audio',key,b); rec[key]=null; await zeichne();
       const p=await audioHoch(key,b);
-      if(p){ await zentraleAudiosLaden(); zeigeSync('☁'); zeichne(); } };
-    mr.start(); rec[key]={mr,start:Date.now()}; await zeichne();
-    const el=$(bid);
-    rec[key].timer=setInterval(()=>{ if(el&&rec[key])
-      el.textContent='⏹ Stopp · '+Math.floor((Date.now()-rec[key].start)/1000)+'s'; },400);
-  }catch(e){ zeigeFehler('<b>Kein Mikrofonzugriff.</b> Bitte im Browser erlauben.'); } }
-function stoppeAufnahme(k){ if(rec[k]){ clearInterval(rec[k].timer); rec[k].mr.stop(); } }
-async function spieleAb(k){ const b=await hole('audio',k);
-  if(b){ new Audio(URL.createObjectURL(b)).play(); return; }
-  const u=audioUrl(k); if(u)new Audio(u).play(); }
-async function ladeRunter(k,w){ let b=await hole('audio',k);
-  if(!b){ const u=audioUrl(k); if(!u)return; b=await(await fetch(u)).blob(); }
-  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
-  a.download=k.replace(/:/g,'_')+'_'+String(w||'').replace(/[^\wäöüßÄÖÜ-]/g,'').slice(0,28)+'.webm'; a.click(); }
-async function loescheAudio(k){ if(!confirm('Aufnahme löschen?'))return; await entferne('audio',k); zeichne(); }
+      if(p){await zentraleAudiosLaden();zeichne();}
+    };
+    mr.start();
+    rec[key]={mr,start:Date.now()};
+    await zeichne();
+    // Wellenform zeichnen
+    const cv=$('welle_'+key.replace(/:/g,'_'));
+    const pg=$('pegel_'+key.replace(/:/g,'_'));
+    const zeit=$('zeit_'+key.replace(/:/g,'_'));
+    if(cv&&an){
+      const c=cv.getContext('2d');
+      const dat=new Uint8Array(an.fftSize);
+      const farbe=key.slice(-3)===':so'?'#4FB286':'#E0A458';
+      const male=()=>{
+        if(!rec[key]){return;}
+        raf=requestAnimationFrame(male);
+        const w=cv.width=cv.clientWidth*(window.devicePixelRatio||1);
+        const h=cv.height=cv.clientHeight*(window.devicePixelRatio||1);
+        an.getByteTimeDomainData(dat);
+        c.clearRect(0,0,w,h);
+        // Mittellinie
+        c.strokeStyle='rgba(255,255,255,.07)';c.lineWidth=1;
+        c.beginPath();c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke();
+        // Wellenform
+        c.strokeStyle=farbe;c.lineWidth=2*(window.devicePixelRatio||1);
+        c.lineJoin='round';c.beginPath();
+        const step=w/dat.length; let max=0;
+        for(let i=0;i<dat.length;i++){
+          const v=(dat[i]-128)/128; if(Math.abs(v)>max)max=Math.abs(v);
+          const y=h/2+v*(h/2-3);
+          i?c.lineTo(i*step,y):c.moveTo(0,y);
+        }
+        c.stroke();
+        if(pg)pg.style.width=Math.min(100,max*165)+'%';
+        if(zeit&&rec[key])zeit.textContent=((Date.now()-rec[key].start)/1000).toFixed(1)+'s';
+      };
+      male();
+    }
+  }catch(e){
+    zeigeFehler('<b>Kein Mikrofonzugriff.</b> Im Browser erlauben — Schloss-Symbol links in der Adresszeile.');
+  }
+}
+function stoppeAufnahme(k){if(rec[k])rec[k].mr.stop();}
+async function spieleAb(k){
+  const b=await hole('audio',k);
+  if(b){const a=new Audio(URL.createObjectURL(b));a.playbackRate=tempo<1?1:1;a.play();return;}
+  const u=audioUrl(k); if(u)new Audio(u).play();
+}
+async function ladeRunter(k,w){
+  if(w===undefined){
+    const teile=k.split(':');
+    const e=DATEN.find(d=>d.i===teile[1]);
+    const p=e?(korr[e.i]||{}):{};
+    if(e)w = teile[2]==='so' ? (p.so!==undefined?p.so:e.so) : (p.ymm!==undefined?p.ymm:e.ymm);
+  }
+  let b=await hole('audio',k);
+  if(!b){const u=audioUrl(k);if(!u)return;b=await(await fetch(u)).blob();}
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=k.replace(/:/g,'_')+'_'+String(w||'').replace(/[^\wäöüßÄÖÜ-]/g,'').slice(0,28)+'.webm';a.click();
+}
+async function loescheAudio(k){if(!confirm('Aufnahme löschen?'))return;await entferne('audio',k);zeichne();}
 
 /* ---------- Daten ---------- */
 let tL,tZ;
-function setze(id,f,w){ korr[id]=korr[id]||{}; korr[id][f]=w;
-  korr[id]._zeit=new Date().toISOString(); korr[id]._wer=ICH;
-  clearTimeout(tL); tL=setTimeout(()=>put('korr','alle',korr),400);
-  clearTimeout(tZ); tZ=setTimeout(()=>zentralSpeichern(id),1400); }
-async function urteil(id,w){ setze(id,'urteil',w); await put('korr','alle',korr); zentralSpeichern(id);
-  const k=$('karte'); if(k&&w==='ok'){ k.classList.add('gut'); setTimeout(()=>k.classList.remove('gut'),700); }
-  const l=liste(); if(idx<l.length-1)idx++; positionMerken(); zeichne(); }
-
-function liste(){ let l = kat==='alle'?DATEN:DATEN.filter(d=>d.k===kat);
+function setze(id,f,w){korr[id]=korr[id]||{};korr[id][f]=w;
+  korr[id]._zeit=new Date().toISOString();korr[id]._wer=ICH;
+  clearTimeout(tL);tL=setTimeout(()=>put('korr','alle',korr),400);
+  clearTimeout(tZ);tZ=setTimeout(()=>zentralSpeichern(id),1400);}
+async function urteil(id,w){
+  const neu=!(korr[id]||{}).urteil;
+  setze(id,'urteil',w);await put('korr','alle',korr);zentralSpeichern(id);
+  if(neu){heute++;try{sessionStorage.setItem('lc_heute',heute);}catch(e){}}
+  const k=$('karte');if(k){k.classList.add('quittiert');setTimeout(()=>k.classList.remove('quittiert'),820);}
+  const l=liste();if(idx<l.length-1)idx++;positionMerken();zeichne();
+}
+function liste(){let l=kat==='alle'?DATEN:DATEN.filter(d=>d.k===kat);
   if(status!=='alle')l=l.filter(d=>passt(d,status));
-  if(suche){ const s=suche.toLowerCase();
-    l=l.filter(d=>((d.de||'')+(d.en||'')+(d.so||'')+(d.ymm||'')).toLowerCase().includes(s)); }
-  return l; }
+  if(suche){const s=suche.toLowerCase();
+    l=l.filter(d=>((d.de||'')+(d.en||'')+(d.so||'')+(d.ymm||'')).toLowerCase().includes(s));}
+  return l;}
 
 /* ---------- Zeichnen ---------- */
 async function zeichne(){
   lokaleAudios=new Set(await alleKeys('audio'));
-  const l=liste(); if(idx>=l.length)idx=Math.max(0,l.length-1);
+  const l=liste();if(idx>=l.length)idx=Math.max(0,l.length-1);
   const e=l[idx];
   const fertig=Object.values(korr).filter(p=>p&&p.urteil).length;
-  const ges=DATEN.length||1;
-  $('fortschritt').textContent=fertig.toLocaleString('de')+' / '+DATEN.length.toLocaleString('de')+' geprüft';
-  $('balken').style.width=Math.min(100,fertig/ges*100)+'%';
-  $('mitAudio').textContent=new Set([...lokaleAudios,...zentraleAudios.keys()]).size;
+  $('balken').style.width=Math.min(100,fertig/(DATEN.length||1)*100)+'%';
+  $('heute').textContent=heute;
 
   let ch='';
-  if(kat!=='alle')ch+='<span class="chip"><b>'+(NAMEN[kat]||kat)+'</b><button class="chipx" onclick="setKat(\'alle\')">✕</button></span>';
-  if(status!=='alle'){ const s=STATUS.find(x=>x[0]===status);
-    ch+='<span class="chip">'+(s?s[1]:status)+'<button class="chipx" onclick="setStatus(\'alle\')">✕</button></span>'; }
-  if(suche)ch+='<span class="chip">„'+esc(suche)+'"<button class="chipx" onclick="document.getElementById(\'suchfeld\').value=\'\';suchen(\'\')">✕</button></span>';
-  $('aktivfilter').innerHTML=ch;
+  if(kat!=='alle')ch+='<span class="chip">'+(NAMEN[kat]||kat)+'<button class="chipx" onclick="setKat(\'alle\')">✕</button></span>';
+  if(status!=='alle'){const s=STATUS.find(x=>x[0]===status);
+    ch+='<span class="chip">'+(s?s[1]:status)+'<button class="chipx" onclick="setStatus(\'alle\')">✕</button></span>';}
+  if(suche)ch+='<span class="chip">"'+esc(suche)+'"<button class="chipx" onclick="document.getElementById(\'suchfeld\').value=\'\';suchen(\'\')">✕</button></span>';
+  $('chips').innerHTML=ch;
 
   const karte=$('karte');
-  if(!e){ karte.innerHTML='<p class="leer">Nichts gefunden.<br><small>Filter im Menü ändern.</small></p>';
-    $('zurueck').disabled=true; $('weiter').disabled=true; return; }
+  if(!e){karte.innerHTML='<p class="leer">nichts gefunden — filter im menü ändern</p>';
+    $('zurueck').disabled=true;$('weiter').disabled=true;return;}
 
+  aktuell=e;
   const p=korr[e.i]||{};
-  const kSo='audio:'+e.i+':so', kYmm='audio:'+e.i+':ymm';
+  const kSo='audio:'+e.i+':so',kYmm='audio:'+e.i+':ymm';
   const soW=p.so!==undefined?p.so:(e.so||'');
   const ymmW=p.ymm!==undefined?p.ymm:(e.ymm||'');
   const deW=p.de!==undefined?p.de:(e.de||'');
   const lang=(e.so||'').length>60;
-  const UT={ok:'✓ als richtig geprüft',falsch:'✗ als falsch markiert',unklar:'? unklar'};
+  const UT={ok:'geprüft · richtig',falsch:'geprüft · falsch',unklar:'geprüft · unklar'};
 
   karte.innerHTML=
-   '<div class="kopfzeile"><span class="zaehler">'+(idx+1).toLocaleString('de')+' VON '+l.length.toLocaleString('de')+'</span>'+
-   '<span class="marken">'+(e.u?'<span class="warn">unsicher</span>':'')+
-     (p.urteil?'<span class="erledigt '+p.urteil+'">'+UT[p.urteil]+'</span>':'')+
-     (p._wer&&p._wer!==ICH?'<span class="wer">'+esc(p._wer)+'</span>':'')+'</span></div>'+
-   '<div class="dezeile"><div style="flex:1;min-width:0">'+
-     (deW?'<div class="de">'+esc(deW)+'</div>'+(e.pl?'<div class="pl">Plural: '+esc(e.pl)+'</div>':'')
-        :'<div class="fehlt">Deutsche Übersetzung fehlt</div>')+
-   '</div>'+
-   (deW?'<button class="rund" onclick="sprich('+JSON.stringify(deW+(e.pl?', '+e.pl:''))+')" title="Deutsch anhören">🔊</button>':'')+
-   '</div>'+
-   (e.en?'<div class="enzeile"><span class="enflag">ENGLISH</span><span class="entext">'+esc(e.en)+'</span>'+
-        '<button class="rund" style="width:42px;height:42px;min-width:42px;font-size:17px;margin-left:auto" '+
-        'onclick="sprich('+JSON.stringify(e.en)+',\'en-US\')" title="Englisch anhören">🔊</button></div>':'')+
-   (!e.de?'<input class="feld anmerkung" placeholder="Deutsche Übersetzung eintragen" value="'+esc(p.de)+'" oninput="setze(\''+e.i+'\',\'de\',this.value)">':'')+
-   (e.n?'<div class="notiz">'+esc(e.n)+'</div>':'')+
-   '<div class="block gruen"><div class="blabel"><span class="punkt"></span>Af-Maxaa · Nord / Somaliland'+
-     (lokaleAudios.has(kSo)||zentraleAudios.has(kSo)?'<span class="hataudio">🎙 vorhanden</span>':'')+'</div>'+
-     (lang?'<textarea class="feld gross" rows="3" oninput="setze(\''+e.i+'\',\'so\',this.value)">'+esc(soW)+'</textarea>'
-          :'<input class="feld gross" value="'+esc(soW)+'" oninput="setze(\''+e.i+'\',\'so\',this.value)">')+
-     audioZeile(kSo,soW,'Af-Maxaa','gruen')+'</div>'+
-   '<div class="block amber"><div class="blabel"><span class="punkt"></span>Af-Maay · Süd'+
-     (lokaleAudios.has(kYmm)||zentraleAudios.has(kYmm)?'<span class="hataudio">🎙 vorhanden</span>':'')+'</div>'+
-     (lang?'<textarea class="feld gross" rows="3" placeholder="Af-Maay eintragen" oninput="setze(\''+e.i+'\',\'ymm\',this.value)">'+esc(ymmW)+'</textarea>'
-          :'<input class="feld gross" placeholder="Af-Maay eintragen" value="'+esc(ymmW)+'" oninput="setze(\''+e.i+'\',\'ymm\',this.value)">')+
-     audioZeile(kYmm,ymmW,'Af-Maay','amber')+'</div>'+
-   '<textarea class="feld anmerkung" rows="2" placeholder="Anmerkung" oninput="setze(\''+e.i+'\',\'notiz\',this.value)">'+esc(p.notiz)+'</textarea>'+
-   '<div class="urteile">'+
-     '<button class="'+(p.urteil==='ok'?'aktiv ok':'')+'" onclick="urteil(\''+e.i+'\',\'ok\')">✓ richtig</button>'+
-     '<button class="'+(p.urteil==='falsch'?'aktiv falsch':'')+'" onclick="urteil(\''+e.i+'\',\'falsch\')">✗ falsch</button>'+
-     '<button class="'+(p.urteil==='unklar'?'aktiv unklar':'')+'" onclick="urteil(\''+e.i+'\',\'unklar\')">? unklar</button></div>';
+  '<div class="kartekopf">'+
+    '<span class="pos">'+(NAMEN[e.k]||e.k).toUpperCase()+' · <b>'+(idx+1).toLocaleString('de')+'</b> / '+l.length.toLocaleString('de')+'</span>'+
+    '<span class="marken">'+(e.u?'<span class="mk warn">unsicher</span>':'')+
+      (p.urteil?'<span class="mk '+p.urteil+'">'+UT[p.urteil]+'</span>':'')+
+      (p._wer&&p._wer!==ICH?'<span class="mk wer">'+esc(p._wer)+'</span>':'')+'</span>'+
+  '</div>'+
 
-  $('zurueck').disabled=idx===0; $('weiter').disabled=idx>=l.length-1;
+  '<div class="quelle"><div class="quellekopf"><div style="flex:1;min-width:0">'+
+    (deW?'<div class="wort'+(deW.length>26?' klein':'')+'">'+esc(deW)+'</div>'+
+         (e.pl?'<div class="plural">Plural · '+esc(e.pl)+'</div>':'')
+        :'<div class="fehlt">Deutsch fehlt</div>')+
+  '</div>'+
+  (deW?'<button class="hoerknopf" onclick="sprichDe()" title="Deutsch anhören (Leertaste)">▶</button>':'')+
+  '</div>'+
+  (e.en?'<div class="enreihe"><span class="enmark">EN</span><span class="entext">'+esc(e.en)+'</span>'+
+       '<button class="hoerknopf klein" onclick="sprichEn()" title="Englisch anhören">▶</button></div>':'')+
+  '<div class="tempo">'+[[0.6,'langsam'],[0.85,'normal'],[1,'schnell']].map(t=>
+    '<button class="'+(tempo===t[0]?'aktiv':'')+'" onclick="setTempo('+t[0]+')">'+t[1]+'</button>').join('')+'</div>'+
+  (!e.de?'<input class="kfeld" style="margin-top:14px;background:#fff;color:#14120F;border-color:rgba(20,18,15,.2)" placeholder="deutsche übersetzung" value="'+esc(p.de)+'" oninput="setze(\''+e.i+'\',\'de\',this.value)">':'')+
+  '</div>'+
+
+  (e.n?'<div class="notiz">'+esc(e.n)+'</div>':'')+
+  kanal('k1',kSo,'Af-Maxaa','Nord · Somaliland',soW,e.i,'so',lang)+
+  kanal('k2',kYmm,'Af-Maay','Süd',ymmW,e.i,'ymm',lang)+
+
+  '<div style="padding:0 16px 14px"><textarea class="kfeld" style="font-size:14px" rows="2" placeholder="anmerkung" oninput="setze(\''+e.i+'\',\'notiz\',this.value)">'+esc(p.notiz)+'</textarea></div>'+
+  '<div class="urteil">'+
+    '<button class="'+(p.urteil==='ok'?'aktiv u1':'')+'" onclick="urteil(\''+e.i+'\',\'ok\')">richtig<span class="taste">1</span></button>'+
+    '<button class="'+(p.urteil==='falsch'?'aktiv u2':'')+'" onclick="urteil(\''+e.i+'\',\'falsch\')">falsch<span class="taste">2</span></button>'+
+    '<button class="'+(p.urteil==='unklar'?'aktiv u3':'')+'" onclick="urteil(\''+e.i+'\',\'unklar\')">unklar<span class="taste">3</span></button>'+
+  '</div>';
+
+  $('zurueck').disabled=idx===0;$('weiter').disabled=idx>=l.length-1;
 }
 
-function audioZeile(key,wort,label,farbe){
+function kanal(kl,key,name,ort,wert,eid,feld,lang){
   const hat=lokaleAudios.has(key)||zentraleAudios.has(key);
   const nurZ=zentraleAudios.has(key)&&!lokaleAudios.has(key);
-  const bid='btn_'+key.replace(/:/g,'_');
-  if(rec[key])return '<div class="audio"><button id="'+bid+'" class="rot" onclick="stoppeAufnahme(\''+key+'\')">⏹ Stopp · 0s</button><span class="pulsi">● Aufnahme läuft</span></div>';
-  return '<div class="audio">'+
-    (hat?'<button onclick="spieleAb(\''+key+'\')">▶ Anhören'+(nurZ?' ☁':'')+'</button>':'')+
-    '<button class="'+farbe+'" onclick="starteAufnahme(\''+key+'\',\''+bid+'\')">🎙 '+(hat?'Neu aufnehmen':label+' aufnehmen')+'</button>'+
-    (hat?'<button onclick="ladeRunter(\''+key+'\','+JSON.stringify(String(wort||''))+')">⤓ Datei</button>'+
-         (lokaleAudios.has(key)?'<button class="loesch" onclick="loescheAudio(\''+key+'\')">löschen</button>':'') :'')+
-    '</div>'; }
+  const laeuft=!!rec[key];
+  const id=key.replace(/:/g,'_');
+  return '<div class="kanal '+kl+'">'+
+    '<div class="kanalkopf"><span class="kanalname">'+name+'</span>'+
+      '<span class="kanalort">'+ort+'</span>'+
+      '<span class="led'+(hat?' an':'')+'"></span></div>'+
+    '<div class="kanalkoerper">'+
+    (lang?'<textarea class="kfeld" rows="3" oninput="setze(\''+eid+'\',\''+feld+'\',this.value)">'+esc(wert)+'</textarea>'
+         :'<input class="kfeld" placeholder="'+name.toLowerCase()+' eintragen" value="'+esc(wert)+'" oninput="setze(\''+eid+'\',\''+feld+'\',this.value)">')+
+    '<div class="welle'+(laeuft?' an':'')+'"><canvas id="welle_'+id+'"></canvas></div>'+
+    '<div class="knoepfe">'+
+      (laeuft
+        ? '<button class="aufnahme" onclick="stoppeAufnahme(\''+key+'\')"><span class="dot"></span>stopp <span id="zeit_'+id+'">0.0s</span></button>'+
+          '<span class="pegelbett"><span class="pegel" id="pegel_'+id+'"></span></span>'
+        : (hat?'<button onclick="spieleAb(\''+key+'\')">▶ anhören'+(nurZ?' ☁':'')+'</button>':'')+
+          '<button class="haupt" onclick="starteAufnahme(\''+key+'\')">● '+(hat?'neu aufnehmen':'aufnehmen')+'</button>'+
+          (hat?'<button onclick="ladeRunter(\''+key+'\')">⤓ datei</button>'+
+               (lokaleAudios.has(key)?'<button class="weg" onclick="loescheAudio(\''+key+'\')">löschen</button>':''):''))+
+    '</div></div></div>';
+}
 
 /* ---------- Statistik ---------- */
 function zeigeStatistik(){
   const el=$('statistik');
-  if(el.style.display==='block'){ el.style.display='none'; return; }
+  if(el.style.display==='block'){el.style.display='none';return;}
   const w=Object.values(korr).filter(p=>p&&p.urteil);
-  const pp={}; Object.values(korr).forEach(p=>{ if(p&&p.urteil){ const x=p._wer||'unbekannt'; pp[x]=(pp[x]||0)+1; } });
+  const pp={};Object.values(korr).forEach(p=>{if(p&&p.urteil){const x=p._wer||'unbekannt';pp[x]=(pp[x]||0)+1;}});
   const rang=Object.entries(pp).sort((a,b)=>b[1]-a[1]);
   const mY=Object.values(korr).filter(p=>p&&p.ymm).length;
   const au=new Set([...lokaleAudios,...zentraleAudios.keys()]).size;
   el.style.display='block';
   el.innerHTML='<h3>Statistik</h3><div class="statgrid">'+
     K(w.length,'geprüft')+K(w.filter(p=>p.urteil==='ok').length,'richtig')+
-    K(w.filter(p=>p.urteil==='falsch').length,'falsch')+K(mY,'Af-Maay')+
-    K(au,'Aufnahmen')+K(DATEN.length,'gesamt')+'</div>'+
+    K(w.filter(p=>p.urteil==='falsch').length,'falsch')+K(mY,'af-maay')+
+    K(au,'aufnahmen')+K(DATEN.length,'gesamt')+'</div>'+
     (rang.length?'<div class="rangliste">'+rang.map((r,i)=>'<div class="rang'+(r[0]===ICH?' ich':'')+'">'+
-      '<span class="pos">'+(i+1)+'</span><span class="nm">'+esc(r[0])+'</span>'+
+      '<span class="n">'+String(i+1).padStart(2,'0')+'</span><span class="nm">'+esc(r[0])+'</span>'+
       '<span class="ct">'+r[1].toLocaleString('de')+'</span></div>').join('')+'</div>'
-     :'<p style="color:var(--tinte3);margin:0">Noch nichts geprüft.</p>');
+     :'<p style="color:var(--schrift3);margin:0;font:500 12px \'IBM Plex Mono\',monospace">noch nichts geprüft</p>');
   el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-const K=(z,l)=>'<div class="statkachel"><div class="z">'+Number(z).toLocaleString('de')+'</div><div class="l">'+l+'</div></div>';
+const K=(z,l)=>'<div class="kachel"><div class="z">'+Number(z).toLocaleString('de')+'</div><div class="l">'+l+'</div></div>';
 
 /* ---------- Export ---------- */
-function exportJSON(){ const r={};
-  for(const k in korr){ const o=Object.assign({},korr[k]); delete o._zeit; delete o._wer;
-    if(Object.keys(o).length)r[k]=o; }
+function exportJSON(){
+  const r={};for(const k in korr){const o=Object.assign({},korr[k]);delete o._zeit;delete o._wer;
+    if(Object.keys(o).length)r[k]=o;}
   const b=new Blob([JSON.stringify({bearbeiter:ICH,stand:new Date().toISOString(),daten:r},null,1)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
-  a.download='lingo-check-'+(ICH||'export')+'-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
-  menueZu(); zeigeSync('gesichert',2500); }
-async function importJSON(ev){ const f=ev.target.files[0]; if(!f)return;
-  try{ const j=JSON.parse(await f.text()); const neu=j.daten||j; const wer=j.bearbeiter||'Import'; let n=0;
-    for(const k in neu){ korr[k]=Object.assign({},korr[k],neu[k],{_zeit:new Date().toISOString(),_wer:wer}); n++; }
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='lingo-check-'+(ICH||'export')+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();menueZu();
+}
+async function importJSON(ev){const f=ev.target.files[0];if(!f)return;
+  try{const j=JSON.parse(await f.text());const neu=j.daten||j;const wer=j.bearbeiter||'Import';
+    for(const k in neu)korr[k]=Object.assign({},korr[k],neu[k],{_zeit:new Date().toISOString(),_wer:wer});
     await put('korr','alle',korr);
     if(ONLINE)for(const k in neu)await zentralSpeichern(k);
-    menueZu(); zeigeSync(n+' übernommen',3000); zeichne();
-  }catch(e){ zeigeFehler('Datei konnte nicht gelesen werden.'); }
-  ev.target.value=''; }
-async function alleAudios(){ const keys=[...new Set([...lokaleAudios,...zentraleAudios.keys()])];
-  if(!keys.length){ menueZu(); zeigeFehler('Noch keine Aufnahmen vorhanden.'); return; }
-  if(!confirm(keys.length+' Aufnahmen herunterladen?'))return; menueZu();
-  for(const k of keys){ const e=DATEN.find(d=>k.indexOf('audio:'+d.i+':')===0);
-    await ladeRunter(k,e?(k.slice(-3)===':so'?e.so:e.ymm):''); await new Promise(r=>setTimeout(r,250)); } }
+    menueZu();zeichne();
+  }catch(e){zeigeFehler('Datei konnte nicht gelesen werden.');}
+  ev.target.value='';}
+async function alleAudios(){const keys=[...new Set([...lokaleAudios,...zentraleAudios.keys()])];
+  if(!keys.length){menueZu();zeigeFehler('Noch keine Aufnahmen vorhanden.');return;}
+  if(!confirm(keys.length+' Aufnahmen herunterladen?'))return;menueZu();
+  for(const k of keys){const e=DATEN.find(d=>k.indexOf('audio:'+d.i+':')===0);
+    await ladeRunter(k,e?(k.slice(-3)===':so'?e.so:e.ymm):'');await new Promise(r=>setTimeout(r,250));}}
 
 /* ---------- Laden ---------- */
-async function ladeBlock(n){ if(geladen.has(n))return;
-  const r=await fetch('daten'+n+'.json?v=4'); if(!r.ok)throw new Error('daten'+n+' HTTP '+r.status);
-  DATEN=DATEN.concat(await r.json()); geladen.add(n); }
-async function ladeRest(){ const i=$('ladeinfo');
-  for(let n=1;n<VERZ.bloecke;n++){ try{ await ladeBlock(n); }catch(e){ console.warn(e.message); }
-    if(i)i.textContent=DATEN.length.toLocaleString('de')+' von '+VERZ.gesamt.toLocaleString('de')+' geladen …'; }
-  if(i)i.textContent=''; zeichne(); }
+async function ladeBlock(n){if(geladen.has(n))return;
+  const r=await fetch('daten'+n+'.json?v=5');if(!r.ok)throw new Error('daten'+n+' HTTP '+r.status);
+  DATEN=DATEN.concat(await r.json());geladen.add(n);}
+async function ladeRest(){const i=$('ladeinfo');
+  for(let n=1;n<VERZ.bloecke;n++){try{await ladeBlock(n);}catch(e){console.warn(e.message);}
+    if(i)i.textContent=DATEN.length.toLocaleString('de')+' / '+VERZ.gesamt.toLocaleString('de')+' geladen';}
+  if(i)i.textContent='';zeichne();}
+function suchen(v){suche=v;idx=0;zeichne();}
+function blaettern(n){const l=liste();idx=Math.max(0,Math.min(l.length-1,idx+n));positionMerken();zeichne();}
+function anmelden(){const v=$('namefeld').value.trim();if(!v){$('namefeld').focus();return;}
+  ICH=v;try{localStorage.setItem('lc_name',ICH);}catch(e){}
+  $('tor').style.display='none';$('ichPille').textContent=ICH;starten();}
+function abmelden(){if(!confirm('Abmelden? Die Arbeit bleibt gespeichert.'))return;
+  try{localStorage.removeItem('lc_name');}catch(e){}location.reload();}
 
-function suchen(v){ suche=v; idx=0; zeichne(); }
-function blaettern(n){ const l=liste(); idx=Math.max(0,Math.min(l.length-1,idx+n)); positionMerken(); zeichne(); }
-function anmelden(){ const v=$('namefeld').value.trim(); if(!v){ $('namefeld').focus(); return; }
-  ICH=v; try{ localStorage.setItem('lc_name',ICH); }catch(e){}
-  $('tor').style.display='none'; $('ichPille').textContent='👤 '+ICH; starten(); }
-function abmelden(){ if(!confirm('Abmelden? Deine Arbeit bleibt gespeichert.'))return;
-  try{ localStorage.removeItem('lc_name'); }catch(e){} location.reload(); }
+/* ---------- Tastatur ---------- */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){menueZu();return;}
+  const t=e.target.tagName;
+  if(t==='INPUT'||t==='TEXTAREA')return;
+  const l=liste();const cur=l[idx];
+  if(e.key==='ArrowRight'){e.preventDefault();blaettern(1);}
+  else if(e.key==='ArrowLeft'){e.preventDefault();blaettern(-1);}
+  else if(e.key===' '){e.preventDefault();sprichDe();}
+  else if(e.key==='1'&&cur)urteil(cur.i,'ok');
+  else if(e.key==='2'&&cur)urteil(cur.i,'falsch');
+  else if(e.key==='3'&&cur)urteil(cur.i,'unklar');
+  else if((e.key==='r'||e.key==='R')&&cur){
+    const k='audio:'+cur.i+':so';rec[k]?stoppeAufnahme(k):starteAufnahme(k);}
+});
 
 async function starten(){
   try{
@@ -629,23 +769,22 @@ async function starten(){
     if(!DB)zeigeFehler('<b>Lokaler Speicher nicht verfügbar.</b> Privates Fenster? Dann normal öffnen.');
     korr=(await hole('korr','alle'))||{};
     ONLINE=!!(CONFIG.SUPABASE_URL&&CONFIG.SUPABASE_KEY);
-    const s=$('sync'); s.textContent=ONLINE?'☁':'○'; s.classList.toggle('online',ONLINE);
-    const rv=await fetch('verzeichnis.json?v=4');
+    const rv=await fetch('verzeichnis.json?v=5');
     if(!rv.ok)throw new Error('verzeichnis.json HTTP '+rv.status);
     VERZ=await rv.json();
-    await ladeBlock(0); await zeichne();
-    if(ONLINE){ const n=await zentralLaden(); await zentraleAudiosLaden();
-      if(n)zeigeSync('☁ '+n,3000);
-      const p=await positionHolen(); if(p&&p.kategorie){ kat=p.kategorie; idx=p.position||0; }
-      zeichne(); }
+    await ladeBlock(0);await zeichne();
+    if(ONLINE){await zentralLaden();await zentraleAudiosLaden();
+      const p=await positionHolen();if(p&&p.kategorie){kat=p.kategorie;idx=p.position||0;}
+      zeichne();}
     ladeRest();
-  }catch(err){ zeigeFehler('<b>Fehler beim Laden:</b> '+err.message+'<br>Bitte mit Strg+F5 neu laden.');
-    $('karte').innerHTML='<p class="leer">Konnte nicht geladen werden.</p>'; }
+  }catch(err){
+    zeigeFehler('<b>Fehler beim Laden:</b> '+err.message+'<br>Bitte mit Strg+F5 neu laden.');
+    $('karte').innerHTML='<p class="leer">konnte nicht geladen werden</p>';
+  }
 }
-function init(){ if(ICH){ $('tor').style.display='none'; $('ichPille').textContent='👤 '+ICH; starten(); }
-  else $('namefeld').focus(); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape')menueZu(); });
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+function init(){if(ICH){$('tor').style.display='none';$('ichPille').textContent=ICH;starten();}
+  else $('namefeld').focus();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 </script>
 </body>
 </html>
