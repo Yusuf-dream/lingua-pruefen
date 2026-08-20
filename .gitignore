@@ -3,3 +3,4 @@ test-*.png
 package-lock.json
 __pycache__/
 ansicht-*.png
+dash-*.png
